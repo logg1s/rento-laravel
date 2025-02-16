@@ -11,9 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('chats', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
+        Schema::create('benefit_price', function (Blueprint $table) {
+            $table->foreignId("benefit_id")->constrained()->onDelete("cascade");
+            $table->foreignId("price_id")->constrained()->onDelete("cascade");
+            $table->primary(["benefit_id", "price_id"]);
         });
     }
 
@@ -22,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('chats');
+        Schema::dropIfExists("benefit_price");
     }
 };

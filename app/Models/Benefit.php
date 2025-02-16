@@ -4,17 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Price extends Model
+class Benefit extends Model
 {
     public function service(): BelongsToMany
     {
         return $this->belongsToMany(Service::class);
     }
-
-    public function benefit(): HasMany
+    public function price(): BelongsToMany
     {
-        return $this->hasMany(Benefit::class)->chaperone();
+        return $this->belongsToMany(Price::class);
     }
 }
