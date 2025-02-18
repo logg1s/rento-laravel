@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Category;
 use App\Models\Role;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -17,5 +18,6 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
 
         Role::insert([['id' => 'user'], ['id' => 'provider']]);
+        Category::insert([['category_name' => 'Dọn dẹp'], ['category_name' => 'Sửa chữa']]);
     }
 }

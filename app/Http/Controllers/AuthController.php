@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\Rule;
 
@@ -33,18 +34,21 @@ class AuthController extends Controller
         ]);
 
         $role = Role::findOrFail($validated['role']);
-        $user = new User;
-        $user->name = $validated['name'];
-        $user->email = $validated['email'];
-        $user->password = bcrypt($validated['password']);
-        $user->phone_number = $validated['phone_number'];
 
-        $user->save();
-        $user->role()->attach($role);
+        return DB::transaction(function () use ($validated, $role) {
+            $user = new User;
+            $user->name = $validated['name'];
+            $user->email = $validated['email'];
+            $user->password = bcrypt($validated['password']);
+            $user->phone_number = $validated['phone_number'];
 
-        $token = auth()->guard()->login($user);
+            $user->save();
+            $user->role()->attach($role);
 
-        return $this->respondWithToken($token, $user);
+            $token = auth()->guard()->login($user);
+
+            return $this->respondWithToken($token, $user);
+        });
     }
 
     public function login()

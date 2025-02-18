@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * 
- *
  * @property int $id
  * @property string $price_name
  * @property int $price_value
@@ -36,9 +36,11 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Price extends Model
 {
-    public function service(): BelongsToMany
+    public $fillable = ['price_name', 'price_value'];
+
+    public function service(): BelongsTo
     {
-        return $this->belongsToMany(Service::class);
+        return $this->belongsTo(Service::class);
     }
 
     public function benefit(): BelongsToMany

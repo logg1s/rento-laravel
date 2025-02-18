@@ -9,8 +9,8 @@ use Illuminate\Database\Eloquent\Model;
  * 
  *
  * @property int $id
- * @property float $lng
- * @property float $lat
+ * @property float|null $lng
+ * @property float|null $lat
  * @property string $location_name
  * @property string|null $deleted_at
  * @property \Illuminate\Support\Carbon|null $created_at
@@ -33,6 +33,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Location extends Model
 {
+    public $fillable = ['location_name'];
+
     public function service(): HasMany
     {
         return $this->hasMany(Service::class)->chaperone();
