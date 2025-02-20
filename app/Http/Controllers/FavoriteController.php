@@ -11,7 +11,9 @@ use Illuminate\Support\Facades\Redis;
 class FavoriteController extends Controller
 {
     const CACHE_TTL = 30; // seconds
-    const JOB_DELAY = 60; // seconds
+    const JOB_DELAY = 10; // seconds
+
+    const RELATION_TABLES = ['user', 'category', 'location', 'price', 'comment'];
 
     public function __construct()
     {
@@ -27,11 +29,12 @@ class FavoriteController extends Controller
 
 
         if (!empty($favoriteIds)) {
-            $favorites = Service::whereIn('id', $favoriteIds)
+            $favorites = Service::with(self::RELATION_TABLES)->whereIn('id', $favoriteIds)
                 ->get();
 
         } else {
             $favorites = $user->serviceFavorite()
+                ->with(self::RELATION_TABLES)
                 ->where('favorite.user_id', $user->id)
                 ->get();
 

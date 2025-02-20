@@ -13,7 +13,7 @@ class ServiceController extends Controller
 {
     const DEFAULT_SIZE = 50;
     const CACHE_TTL = 30;
-    const RELATION_TABLES = ['user', 'category', 'location', 'price', 'comment'];
+    const RELATION_TABLES = ['user', 'category', 'location', 'price', 'comment' => ['user'], 'userFavorite'];
     public function __construct()
     {
         $this->middleware('auth:api');

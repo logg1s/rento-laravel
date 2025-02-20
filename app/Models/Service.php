@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * @property int $id
@@ -18,6 +20,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $deleted_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read bool $is_liked
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Benefit> $benefit
  * @property-read int|null $benefit_count
  * @property-read \App\Models\Category $category
@@ -52,6 +55,29 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Service extends Model
 {
     use SoftDeletes;
+
+    protected $appends = ['is_liked', 'comment_count'];
+
+    public function isLiked(): Attribute
+    {
+        return new Attribute(
+            get: function () {
+                if (!Auth::check()) {
+                    return false;
+                }
+                return $this->userFavorite()->where('user_id', Auth::id())->exists();
+            },
+        );
+    }
+
+    public function commentCount(): Attribute
+    {
+        return new Attribute(
+            get: function () {
+                return $this->comment()->count();
+            },
+        );
+    }
 
     public function user(): BelongsTo
     {
