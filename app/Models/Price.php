@@ -50,6 +50,6 @@ class Price extends Model
 
     public function order(): HasMany
     {
-        return $this->hasMany(Order::class)->chaperone();
+        return $this->hasMany(Order::class);
     }
 }

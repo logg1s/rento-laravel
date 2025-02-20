@@ -5,9 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * 
+ *
  *
  * @property int $id
  * @property string $category_name
@@ -32,13 +33,14 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  */
 class Category extends Model
 {
+    use SoftDeletes;
     public function service() : HasMany
     {
-        return $this->hasMany(Service::class)->chaperone();
+        return $this->hasMany(Service::class);
     }
 
     public function image(): HasMany
     {
-        return $this->hasMany(Image::class)->chaperone();
+        return $this->hasMany(Image::class);
     }
 }

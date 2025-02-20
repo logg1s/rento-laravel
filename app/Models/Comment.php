@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * 
+ *
  *
  * @property int $id
  * @property int $rate
@@ -37,6 +37,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Comment extends Model
 {
+
+    protected $fillable = ['rate', 'comment_body', 'user_id', 'service_id'];
     public function image(): BelongsToMany
     {
         return $this->belongsToMany(Image::class);

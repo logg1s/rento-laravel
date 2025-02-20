@@ -13,7 +13,7 @@ use Illuminate\Notifications\Notifiable;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 
 /**
- * 
+ *
  *
  * @property int $id
  * @property string $name
@@ -68,32 +68,32 @@ class User extends Authenticatable implements JWTSubject
 
     public function image(): HasMany
     {
-        return $this->hasMany(Image::class)->chaperone();
+        return $this->hasMany(Image::class);
     }
 
     public function service(): HasMany
     {
-        return $this->hasMany(Service::class)->chaperone();
+        return $this->hasMany(Service::class);
     }
 
-    public function serviceFavorite(): HasMany
+    public function serviceFavorite(): BelongsToMany
     {
-        return $this->hasMany(Service::class)->chaperone();
+        return $this->BelongsToMany(Service::class, 'favorite');
     }
 
     public function sentMessage(): HasMany
     {
-        return $this->hasMany(Message::class, 'sender_id')->chaperone();
+        return $this->hasMany(Message::class, 'sender_id');
     }
 
     public function receivedMessage(): HasMany
     {
-        return $this->hasMany(Message::class, 'receiver_id')->chaperone();
+        return $this->hasMany(Message::class, 'receiver_id');
     }
 
     public function notification(): HasMany
     {
-        return $this->hasMany(Notification::class)->chaperone();
+        return $this->hasMany(Notification::class);
     }
 
     public function role(): BelongsToMany
@@ -103,12 +103,12 @@ class User extends Authenticatable implements JWTSubject
 
     public function userSetting(): HasOne
     {
-        return $this->hasOne(UserSetting::class)->chaperone();
+        return $this->hasOne(UserSetting::class);
     }
 
     public function viewedServiceLog(): HasMany
     {
-        return $this->hasMany(ViewedServiceLog::class)->chaperone();
+        return $this->hasMany(ViewedServiceLog::class);
     }
 
     protected $hidden = [

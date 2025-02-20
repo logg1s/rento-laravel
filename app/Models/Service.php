@@ -70,7 +70,7 @@ class Service extends Model
 
     public function comment(): HasMany
     {
-        return $this->hasMany(Comment::class)->chaperone();
+        return $this->hasMany(Comment::class);
     }
 
     public function userFavorite(): BelongsToMany
@@ -80,26 +80,26 @@ class Service extends Model
 
     public function viewedServiceLog(): HasMany
     {
-        return $this->hasMany(ViewedServiceLog::class)->chaperone();
+        return $this->hasMany(ViewedServiceLog::class);
     }
 
     public function benefit(): HasMany
     {
-        return $this->hasMany(Benefit::class)->chaperone();
+        return $this->hasMany(Benefit::class);
     }
 
     public function image(): HasMany
     {
-        return $this->hasMany(Image::class)->chaperone();
+        return $this->hasMany(Image::class);
     }
 
     public function price(): HasMany
     {
-        return $this->hasMany(Price::class)->chaperone();
+        return $this->hasMany(Price::class);
     }
 
     public function order(): HasMany
     {
-        return $this->hasMany(Order::class)->chaperone();
+        return $this->hasMany(Order::class);
     }
 }

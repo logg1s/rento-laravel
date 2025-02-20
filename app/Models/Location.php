@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * 
+ *
  *
  * @property int $id
  * @property float|null $lng
@@ -37,11 +37,11 @@ class Location extends Model
 
     public function service(): HasMany
     {
-        return $this->hasMany(Service::class)->chaperone();
+        return $this->hasMany(Service::class);
     }
 
     public function order(): HasMany
     {
-        return $this->hasMany(Order::class)->chaperone();
+        return $this->hasMany(Order::class);
     }
 }
