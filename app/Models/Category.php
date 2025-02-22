@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- *
+ * 
  *
  * @property int $id
  * @property string $category_name
@@ -29,6 +29,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Category whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Category whereImageId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Category whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Category onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Category withTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Category withoutTrashed()
  * @mixin \Eloquent
  */
 class Category extends Model

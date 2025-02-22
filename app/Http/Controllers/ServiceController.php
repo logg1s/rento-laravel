@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Redis;
 
 class ServiceController extends Controller
 {
-    const DEFAULT_SIZE = 50;
+    const DEFAULT_SIZE = 5;
     const CACHE_TTL = 30;
     const RELATION_TABLES = ['user', 'category', 'location', 'price', 'comment' => ['user'], 'userFavorite'];
     public function __construct()
@@ -56,7 +56,7 @@ class ServiceController extends Controller
             Redis::expire('service:all:keys', self::CACHE_TTL);
         }
 
-        return response()->json($services);
+        return response()->json($services, 200, [], JSON_UNESCAPED_UNICODE);
     }
 
     public function getById(Request $request, string $id)

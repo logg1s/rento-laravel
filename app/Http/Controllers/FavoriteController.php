@@ -29,14 +29,13 @@ class FavoriteController extends Controller
 
 
         if (!empty($favoriteIds)) {
-            $favorites = Service::with(self::RELATION_TABLES)->whereIn('id', $favoriteIds)
-                ->get();
+            $favorites = Service::with(self::RELATION_TABLES)->whereIn('id', $favoriteIds)->orderBy('id', 'desc')->get();
 
         } else {
             $favorites = $user->serviceFavorite()
                 ->with(self::RELATION_TABLES)
                 ->where('favorite.user_id', $user->id)
-                ->get();
+                ->orderBy('id', 'desc')->get();
 
             if ($favorites->isNotEmpty()) {
                 Redis::pipeline(function ($pipe) use ($redisKey, $favorites) {
@@ -58,7 +57,6 @@ class FavoriteController extends Controller
 
         $isLiked = Redis::sismember($redisKey, $serviceId);
 
-        // Dispatch job với delay để gom nhóm các thao tác
         ProcessFavoriteUpdate::dispatch([
             'user_id' => $user->id,
             'service_id' => $serviceId,

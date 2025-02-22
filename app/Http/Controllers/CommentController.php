@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 
 class CommentController extends Controller
 {
+
     private const RELATION_TABLES = ['image', 'service', 'user'];
 
     public function __construct()

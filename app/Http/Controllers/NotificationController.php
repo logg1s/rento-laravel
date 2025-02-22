@@ -7,6 +7,10 @@ use Illuminate\Http\Request;
 
 class NotificationController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth:api');
+    }
     private const RELATION_TABLES = ['user'];
     private const RULE_REQUEST = [
         'title' => 'string',

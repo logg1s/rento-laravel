@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\RoleEnum;
 use App\Http\Controllers\Controller;
 use App\Models\Role;
+use App\Models\Service;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;

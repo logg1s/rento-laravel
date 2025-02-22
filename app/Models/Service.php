@@ -8,24 +8,26 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Auth;
 
 /**
+ * 
+ *
  * @property int $id
  * @property string $service_name
  * @property string $service_description
  * @property int $user_id
  * @property int $category_id
  * @property int $location_id
- * @property string|null $deleted_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read bool $is_liked
+ * @property-read mixed $average_rate
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Benefit> $benefit
  * @property-read int|null $benefit_count
  * @property-read \App\Models\Category $category
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Comment> $comment
  * @property-read int|null $comment_count
+ * @property-read mixed $comment_by_you
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Image> $image
  * @property-read int|null $image_count
  * @property-read \App\Models\Location $location
@@ -40,6 +42,7 @@ use Illuminate\Support\Facades\Auth;
  * @property-read int|null $viewed_service_log_count
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Service newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Service newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Service onlyTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Service query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Service whereCategoryId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Service whereCreatedAt($value)
@@ -50,23 +53,22 @@ use Illuminate\Support\Facades\Auth;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Service whereServiceName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Service whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Service whereUserId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Service withTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Service withoutTrashed()
  * @mixin \Eloquent
  */
 class Service extends Model
 {
     use SoftDeletes;
 
-    protected $appends = ['is_liked', 'comment_count'];
+    protected $appends = ['comment_count', 'average_rate', 'comment_by_you'];
 
-    public function isLiked(): Attribute
+
+    public function commentByYou(): Attribute
     {
+        $user = auth()->guard()->user();
         return new Attribute(
-            get: function () {
-                if (!Auth::check()) {
-                    return false;
-                }
-                return $this->userFavorite()->where('user_id', Auth::id())->exists();
-            },
+            get: fn() =>  $this->comment()->where('user_id', $user->id)->first()
         );
     }
 
@@ -75,6 +77,14 @@ class Service extends Model
         return new Attribute(
             get: function () {
                 return $this->comment()->count();
+            },
+        );
+    }
+    public function averageRate(): Attribute
+    {
+        return new Attribute(
+            get: function () {
+                return doubleval($this->comment()->avg('rate'));
             },
         );
     }
