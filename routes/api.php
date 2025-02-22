@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BenefitController;
 use App\Http\Controllers\PriceController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\CommentController;
@@ -16,6 +17,7 @@ Route::middleware('throttle:api')->group(function () {
         Route::get('/me', 'me');
         Route::post('/register', 'register');
         Route::get('/validate', 'validateToken');
+        Route::post('/checkEmail', 'checkEmail');
     });
 
     Route::controller(ServiceController::class)->prefix('services')->group(function ($router) {
@@ -44,7 +46,16 @@ Route::middleware('throttle:api')->group(function () {
         Route::get('/', 'getAll');
         Route::get('/{id}', 'getById');
         Route::post('/', 'create');
-        Route::post('/{id}', 'update');
+        Route::put('/{id}', 'update');
+        Route::delete('/{id}', 'delete');
+    });
+
+
+    Route::controller(BenefitController::class)->prefix('benefits')->group(function ($router) {
+        Route::get('/', 'getAll');
+        Route::get('/{id}', 'getById');
+        Route::get('/service/{serviceId}', 'getByServiceId');
+        Route::post('/', 'create');
         Route::put('/{id}', 'update');
         Route::delete('/{id}', 'delete');
     });

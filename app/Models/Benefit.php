@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
@@ -31,6 +32,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  */
 class Benefit extends Model
 {
+    protected $fillable = ['benefit_name', 'service_id'];
+    protected $appends = ['price_id'];
+
+    public function priceId(): Attribute
+    {
+        return new Attribute(get: function () {
+            return $this->price()->pluck('price_id');
+        });
+    }
     public function service(): BelongsToMany
     {
         return $this->belongsToMany(Service::class);

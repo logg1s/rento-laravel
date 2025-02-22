@@ -13,7 +13,8 @@ class ServiceController extends Controller
 {
     const DEFAULT_SIZE = 5;
     const CACHE_TTL = 30;
-    const RELATION_TABLES = ['user', 'category', 'location', 'price', 'comment' => ['user'], 'userFavorite'];
+    const RELATION_TABLES = ['user', 'category', 'location', 'price'];
+    const RELATION_TABLE_DETAILS = ['userFavorite', 'benefit', 'comment' => ['user']];
     public function __construct()
     {
         $this->middleware('auth:api');
@@ -67,7 +68,7 @@ class ServiceController extends Controller
         if ($service) {
             $service = json_decode($service, true);
         } else {
-            $service = Service::findOrFail($id)->load(self::RELATION_TABLES);
+            $service = Service::findOrFail($id)->load(array_merge(self::RELATION_TABLES, self::RELATION_TABLE_DETAILS));
             Redis::set($key, json_encode($service));
             Redis::expire($key, self::CACHE_TTL);
         }

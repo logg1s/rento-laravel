@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 
 class PriceController extends Controller
 {
+    private const RELATION_TABLES = ['benefit'];
     public function __construct()
     {
         $this->middleware('auth:api');
@@ -16,12 +17,12 @@ class PriceController extends Controller
 
     public function getAll()
     {
-        return response()->json(Price::all());
+        return response()->json(Price::all()->load(self::RELATION_TABLES));
     }
 
     public function getById(Request $request, string $id)
     {
-        return response()->json(Price::findOrFail($id));
+        return response()->json(Price::findOrFail($id)->load(self::RELATION_TABLES));
     }
 
     public function create(Request $request)
@@ -38,7 +39,7 @@ class PriceController extends Controller
             $price->price_value = $validate['price_value'];
             $price->service()->associate($service);
             $price->save();
-            return response()->json($price);
+            return response()->json($price->load(self::RELATION_TABLES));
         });
     }
 
@@ -53,7 +54,7 @@ class PriceController extends Controller
             $price->price_name = $validate['price_name'];
             $price->price_value = $validate['price_value'];
             $price->save();
-            return response()->json($price);
+            return response()->json($price->load(self::RELATION_TABLES));
         });
     }
 
