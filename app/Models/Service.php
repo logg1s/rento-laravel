@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Artisan;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -64,11 +65,20 @@ class Service extends Model
     protected $appends = ['comment_count', 'average_rate', 'comment_by_you'];
 
 
+    // public function rentedByYou(): Attribute 
+    // {
+    //     $user = auth()->guard()->user();
+    //     return new Attribute(
+    //         get: fn() => $this->user()->where
+    //     )
+    // }
+
+
     public function commentByYou(): Attribute
     {
         $user = auth()->guard()->user();
         return new Attribute(
-            get: fn() =>  $this->comment()->where('user_id', $user->id)->first()
+            get: fn() => $this->comment()->where('user_id', $user->id)->first()
         );
     }
 

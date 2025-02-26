@@ -40,7 +40,7 @@ class CommentController extends Controller
             return response()->json(['message' => 'User already commented on this service.'], 400);
         }
 
-        return DB::transaction(fn () => response()->json(
+        return DB::transaction(fn() => response()->json(
             Comment::create($validated + ['user_id' => $user->id, 'service_id' => $serviceId])
         ));
     }
@@ -52,7 +52,7 @@ class CommentController extends Controller
 
         // Validate input
         $validated = $request->validate([
-            'rate' => ['required', 'integer', 'between:1,5'],
+            'rate' => ['integer', 'between:1,5'],
             'comment_body' => ['required', 'string', 'min:1'],
         ]);
 
@@ -65,13 +65,14 @@ class CommentController extends Controller
             return response()->json(['message' => 'You are not allowed to edit this comment.'], 403);
         }
 
-        DB::transaction(fn () => $comment->update($validated));
+        DB::transaction(fn() => $comment->update($validated));
 
         return response()->json($comment);
     }
 
 
-    public function delete(string $id) {
+    public function delete(string $id)
+    {
         $comment = Comment::findOrFail($id);
         $user = auth()->user();
 

@@ -28,6 +28,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Benefit whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Benefit whereServiceId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Benefit whereUpdatedAt($value)
+ * @property-read mixed $price_id
  * @mixin \Eloquent
  */
 class Benefit extends Model

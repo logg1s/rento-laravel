@@ -52,7 +52,7 @@ class BenefitController extends Controller
         $benefit = Benefit::findOrFail($id);
         return DB::transaction(function () use ($benefit, $validate) {
             $benefit->update($validate);
-            $benefit->price()->attach(Price::findOrFail($validate['price_id']));
+            $benefit->price()->syncWithoutDetaching(Price::findOrFail($validate['price_id']));
             return response()->json($benefit->load(self::RELATION_TABLES));
         });
     }

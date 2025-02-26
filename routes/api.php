@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BenefitController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PriceController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\CommentController;
@@ -69,6 +70,14 @@ Route::middleware('throttle:api')->group(function () {
         Route::get('/', 'getAll');
         Route::get('/{id}', 'getById');
         Route::post('/{serviceId}', 'create');
+        Route::put('/{id}', 'update');
+        Route::delete('/{id}', 'delete');
+    });
+
+    Route::controller(OrderController::class)->prefix('orders')->group(function () {
+        Route::get('/', 'getAll');
+        Route::get('/{id}', 'getById');
+        Route::post('/', 'create');
         Route::put('/{id}', 'update');
         Route::delete('/{id}', 'delete');
     });

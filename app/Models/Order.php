@@ -39,10 +39,27 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Order whereTimeStart($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Order whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Order whereUserId($value)
+ * @property int $status
+ * @property string $address
+ * @property string $phone_number
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Order whereAddress($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Order wherePhoneNumber($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Order whereStatus($value)
  * @mixin \Eloquent
  */
 class Order extends Model
 {
+    protected $fillable = [
+        'user_id',
+        'service_id',
+        'price_id',
+        'price_final_value',
+        'status',
+        'address',
+        'phone_number',
+        'time_start',
+        'message',
+    ];
     public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);
