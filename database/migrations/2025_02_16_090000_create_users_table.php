@@ -17,6 +17,7 @@ return new class extends Migration {
             $table->string('phone_number');
             $table->foreignId('image_id')->nullable()->constrained();
             $table->string('password');
+            $table->text('address')->nullable();
             $table->softDeletes();
             $table->timestamps();
         });

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * 
@@ -32,6 +33,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  */
 class Image extends Model
 {
+    protected $fillable = ['path'];
     public function service(): BelongsToMany
     {
         return $this->belongsToMany(Service::class);
@@ -45,8 +47,8 @@ class Image extends Model
     {
         return $this->belongsToMany(Comment::class);
     }
-    public function user(): BelongsTo
+    public function user(): HasOne
     {
-        return $this->belongsTo(User::class);
+        return $this->hasOne(User::class);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -66,11 +67,11 @@ class User extends Authenticatable implements JWTSubject
 {
     use Notifiable, SoftDeletes;
 
-    protected $fillable = ['name', 'phone_number', 'password', 'email'];
+    protected $fillable = ['name', 'phone_number', 'password', 'email', 'address', 'image_id'];
 
-    public function image(): HasMany
+    public function image(): BelongsTo
     {
-        return $this->hasMany(Image::class);
+        return $this->belongsTo(Image::class);
     }
 
     public function service(): HasMany
@@ -108,7 +109,8 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasOne(UserSetting::class);
     }
 
-    public function comment() : HasMany {
+    public function comment(): HasMany
+    {
         return $this->hasMany(Comment::class);
     }
 

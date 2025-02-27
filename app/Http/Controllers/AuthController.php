@@ -4,18 +4,22 @@ namespace App\Http\Controllers;
 
 use App\Enums\RoleEnum;
 use App\Http\Controllers\Controller;
+use App\Models\Image;
 use App\Models\Role;
 use App\Models\Service;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Session\Store;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\Rule;
+use Storage;
 
 class AuthController extends Controller
 {
     const KEY_LIST_EMAILS = "list:emails";
+    const RELATION_TABLES = ['image', 'role'];
     public function __construct()
     {
         $this->middleware('auth:api', ['except' => ['login', 'register', 'refresh', 'checkEmail']]);
@@ -52,6 +56,7 @@ class AuthController extends Controller
             'email' => ['email', 'unique:users', 'max:100'],
             'password' => ['required', 'max:50', Password::min(8)],
             'phone_number' => ['required', 'min:4'],
+            'address' => ['max: 255'],
             'role' => [Rule::enum(RoleEnum::class)]
         ]);
 
@@ -63,6 +68,7 @@ class AuthController extends Controller
             $user->email = $validated['email'];
             $user->password = bcrypt($validated['password']);
             $user->phone_number = $validated['phone_number'];
+            $user->address = $validated['address'];
 
             $user->save();
             $user->role()->attach($role);
@@ -70,6 +76,88 @@ class AuthController extends Controller
             $token = auth()->guard()->login($user);
 
             return $this->respondWithToken($token, $user);
+        });
+    }
+
+    public function update(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['nullable', 'max:50'],
+            'phone_number' => ['nullable', 'min:4'],
+            'address' => ['nullable', 'max: 255'],
+        ]);
+
+        return DB::transaction(function () use ($validated) {
+            $user = auth()->guard()->user();
+            $user->update($validated);
+            return response()->json($user);
+        });
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $validated = $request->validate([
+            'old_password' => ['required', 'max:50', Password::min(8)],
+            'new_password' => ['required', 'max:50', Password::min(8)],
+        ]);
+
+        return DB::transaction(function () use ($validated) {
+            $user = auth()->guard()->user();
+
+            if (
+                !auth()->guard()->validate([
+                    'email' => $user->email,
+                    'password' => $validated['old_password']
+                ])
+            ) {
+                return response()->json([
+                    'message' => 'Old password is incorrect'
+                ], 400);
+            }
+
+            // Update password mới
+            $user->password = bcrypt($validated['new_password']);
+            $user->save();
+
+            // Refresh token
+            return response()->json($user);
+        });
+    }
+
+    public function uploadAvatar(Request $request)
+    {
+        $request->validate([
+            'avatar' => ['required', 'image', 'mimes:jpeg,png,jpg,gif', 'max:100000']
+        ]);
+
+        return DB::transaction(function () use ($request) {
+            $user = auth()->guard()->user();
+
+            if ($user->image_id) {
+                $oldImage = Image::find($user->image_id);
+                if ($oldImage) {
+                    $user->image()->dissociate();
+                    $user->save();
+
+                    if ($oldImage->user()->count() === 0) {
+                        $relativePath = str_replace('/storage/', '', $oldImage->path);
+                        Storage::disk('public')->delete($relativePath);
+                        $oldImage->delete();
+                    }
+                }
+            }
+
+            // Save new image
+            $filename = $request->file('avatar')->hashName();
+            $path = $request->file('avatar')->storeAs('avatars', $filename, "public");
+            $image = Image::create(['path' => Storage::url($path)]);
+            $user->image()->associate($image);
+            $user->save();
+
+            return response()->json([
+                'avatar' => $user->image,
+                'message' => 'Avatar updated successfully'
+            ]);
         });
     }
 
@@ -86,7 +174,7 @@ class AuthController extends Controller
 
     public function me()
     {
-        return response()->json(auth()->guard()->user()->load('role'));
+        return response()->json(auth()->guard()->user()->load(self::RELATION_TABLES));
     }
 
     public function logout()

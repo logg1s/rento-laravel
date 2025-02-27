@@ -19,6 +19,9 @@ Route::middleware('throttle:api')->group(function () {
         Route::post('/register', 'register');
         Route::get('/validate', 'validateToken');
         Route::post('/checkEmail', 'checkEmail');
+        Route::put('/update', 'update');
+        Route::put('/updatePassword', 'updatePassword');
+        Route::post("/uploadAvatar", 'uploadAvatar');
     });
 
     Route::controller(ServiceController::class)->prefix('services')->group(function ($router) {
