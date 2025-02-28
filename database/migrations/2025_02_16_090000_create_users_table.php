@@ -14,10 +14,11 @@ return new class extends Migration {
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
-            $table->string('phone_number');
+            $table->string('phone_number')->nullable();
             $table->foreignId('image_id')->nullable()->constrained();
             $table->string('password');
             $table->text('address')->nullable();
+            $table->boolean('is_oauth')->default(false);
             $table->softDeletes();
             $table->timestamps();
         });

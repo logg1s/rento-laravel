@@ -22,6 +22,7 @@ Route::middleware('throttle:api')->group(function () {
         Route::put('/update', 'update');
         Route::put('/updatePassword', 'updatePassword');
         Route::post("/uploadAvatar", 'uploadAvatar');
+        Route::post('/login-google', 'loginWithGoogle');
     });
 
     Route::controller(ServiceController::class)->prefix('services')->group(function ($router) {

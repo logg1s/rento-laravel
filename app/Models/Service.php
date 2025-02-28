@@ -65,14 +65,6 @@ class Service extends Model
     protected $appends = ['comment_count', 'average_rate', 'comment_by_you'];
 
 
-    // public function rentedByYou(): Attribute 
-    // {
-    //     $user = auth()->guard()->user();
-    //     return new Attribute(
-    //         get: fn() => $this->user()->where
-    //     )
-    // }
-
 
     public function commentByYou(): Attribute
     {

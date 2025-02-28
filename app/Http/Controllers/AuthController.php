@@ -19,10 +19,9 @@ use Storage;
 class AuthController extends Controller
 {
     const KEY_LIST_EMAILS = "list:emails";
-    const RELATION_TABLES = ['image', 'role'];
     public function __construct()
     {
-        $this->middleware('auth:api', ['except' => ['login', 'register', 'refresh', 'checkEmail']]);
+        $this->middleware('auth:api', ['except' => ['login', 'register', 'refresh', 'checkEmail', 'loginWithGoogle']]);
     }
 
     public function validateToken(Request $request)
@@ -161,7 +160,38 @@ class AuthController extends Controller
         });
     }
 
-    public function login()
+    public function loginWithGoogle(Request $request)
+    {
+        $validate = $request->validate(
+            [
+                'email' => 'required|email',
+                'name' => 'required|max:50',
+                'image_url' => 'required|url'
+            ]
+        );
+
+        return DB::transaction(function () use ($request, $validate) {
+            $user = User::where('email', $request->email)->first();
+            if (!$user) {
+                $salt = config('jwt.secret');
+                $password = hash('sha256', $validate['email'] . $salt);
+                $user = User::create([
+                    'name' => $validate['name'],
+                    'email' => $validate['email'],
+                    'is_oauth' => true,
+                    'password' => bcrypt(substr($password, 0, 8)),
+                ]);
+
+                $image = Image::create(['path' => $validate['image_url']]);
+                $user->image()->associate($image);
+                $user->save();
+            }
+            $token = auth()->guard()->login($user);
+            return $this->respondWithToken($token);
+        });
+    }
+
+    public function login(Request $request)
     {
         $credentials = request(['email', 'password']);
 
@@ -174,7 +204,7 @@ class AuthController extends Controller
 
     public function me()
     {
-        return response()->json(auth()->guard()->user()->load(self::RELATION_TABLES));
+        return response()->json(auth()->guard()->user());
     }
 
     public function logout()

@@ -67,7 +67,12 @@ class User extends Authenticatable implements JWTSubject
 {
     use Notifiable, SoftDeletes;
 
-    protected $fillable = ['name', 'phone_number', 'password', 'email', 'address', 'image_id'];
+    protected $fillable = ['name', 'phone_number', 'password', 'email', 'address', 'image_id', 'is_oauth'];
+
+    protected $with = [
+        'image',
+        'role'
+    ];
 
     public function image(): BelongsTo
     {
