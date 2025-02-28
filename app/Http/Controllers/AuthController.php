@@ -78,87 +78,7 @@ class AuthController extends Controller
         });
     }
 
-    public function update(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => ['nullable', 'max:50'],
-            'phone_number' => ['nullable', 'min:4'],
-            'address' => ['nullable', 'max: 255'],
-        ]);
 
-        return DB::transaction(function () use ($validated) {
-            $user = auth()->guard()->user();
-            $user->update($validated);
-            return response()->json($user);
-        });
-    }
-
-    public function updatePassword(Request $request)
-    {
-        $validated = $request->validate([
-            'old_password' => ['required', 'max:50', Password::min(8)],
-            'new_password' => ['required', 'max:50', Password::min(8)],
-        ]);
-
-        return DB::transaction(function () use ($validated) {
-            $user = auth()->guard()->user();
-
-            if (
-                !auth()->guard()->validate([
-                    'email' => $user->email,
-                    'password' => $validated['old_password']
-                ])
-            ) {
-                return response()->json([
-                    'message' => 'Old password is incorrect'
-                ], 400);
-            }
-
-            // Update password mới
-            $user->password = bcrypt($validated['new_password']);
-            $user->save();
-
-            // Refresh token
-            return response()->json($user);
-        });
-    }
-
-    public function uploadAvatar(Request $request)
-    {
-        $request->validate([
-            'avatar' => ['required', 'image', 'mimes:jpeg,png,jpg,gif', 'max:100000']
-        ]);
-
-        return DB::transaction(function () use ($request) {
-            $user = auth()->guard()->user();
-
-            if ($user->image_id) {
-                $oldImage = Image::find($user->image_id);
-                if ($oldImage) {
-                    $user->image()->dissociate();
-                    $user->save();
-
-                    if ($oldImage->user()->count() === 0) {
-                        $relativePath = str_replace('/storage/', '', $oldImage->path);
-                        Storage::disk('public')->delete($relativePath);
-                        $oldImage->delete();
-                    }
-                }
-            }
-
-            // Save new image
-            $filename = $request->file('avatar')->hashName();
-            $path = $request->file('avatar')->storeAs('avatars', $filename, "public");
-            $image = Image::create(['path' => Storage::url($path)]);
-            $user->image()->associate($image);
-            $user->save();
-
-            return response()->json([
-                'avatar' => $user->image,
-                'message' => 'Avatar updated successfully'
-            ]);
-        });
-    }
 
     public function loginWithGoogle(Request $request)
     {
@@ -202,10 +122,7 @@ class AuthController extends Controller
         return $this->respondWithToken($token);
     }
 
-    public function me()
-    {
-        return response()->json(auth()->guard()->user());
-    }
+
 
     public function logout()
     {

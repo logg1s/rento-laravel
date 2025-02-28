@@ -8,6 +8,7 @@ use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('throttle:api')->group(function () {
@@ -15,14 +16,18 @@ Route::middleware('throttle:api')->group(function () {
         Route::post('/login', 'login');
         Route::post('/logout', 'logout');
         Route::post('/refresh', 'refresh');
-        Route::get('/me', 'me');
         Route::post('/register', 'register');
         Route::get('/validate', 'validateToken');
         Route::post('/checkEmail', 'checkEmail');
+        Route::post('/login-google', 'loginWithGoogle');
+    });
+
+    Route::controller(UserController::class)->prefix('users')->group(function ($router) {
+        Route::get('/me', 'me');
+        Route::get('/{id}', 'getById');
+        Route::post("/uploadAvatar", 'uploadAvatar');
         Route::put('/update', 'update');
         Route::put('/updatePassword', 'updatePassword');
-        Route::post("/uploadAvatar", 'uploadAvatar');
-        Route::post('/login-google', 'loginWithGoogle');
     });
 
     Route::controller(ServiceController::class)->prefix('services')->group(function ($router) {
