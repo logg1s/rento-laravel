@@ -30,6 +30,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  */
 class ViewedServiceLog extends Model
 {
+    protected $fillable = [
+        'user_id',
+        'service_id',
+    ];
+
     public function service(): BelongsTo
     {
         return $this->belongsTo(Service::class);

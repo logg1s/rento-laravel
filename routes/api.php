@@ -24,6 +24,8 @@ Route::middleware('throttle:api')->group(function () {
 
     Route::controller(UserController::class)->prefix('users')->group(function ($router) {
         Route::get('/me', 'me');
+        Route::get('/orders', 'getOrder');
+        Route::put('/orders/{id}/update-status', 'updateStatusOrder');
         Route::get('/{id}', 'getById');
         Route::post("/uploadAvatar", 'uploadAvatar');
         Route::put('/update', 'update');

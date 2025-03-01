@@ -59,6 +59,7 @@ class Order extends Model
         'phone_number',
         'time_start',
         'message',
+        'cancel_by',
     ];
     public function location(): BelongsTo
     {
@@ -67,7 +68,7 @@ class Order extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(Location::class);
+        return $this->belongsTo(User::class);
     }
 
     public function price(): BelongsTo
@@ -78,5 +79,10 @@ class Order extends Model
     public function service(): BelongsTo
     {
         return $this->belongsTo(Service::class);
+    }
+
+    public function cancelBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'cancel_by');
     }
 }

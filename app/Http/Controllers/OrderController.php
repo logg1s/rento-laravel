@@ -31,7 +31,7 @@ class OrderController extends Controller
             'price_id' => 'required|exists:prices,id',
             'price_final_value' => 'required|integer',
             'address' => 'string|max:255',
-            'phone_number' => ['required', 'regex:/0\d{9,}/'],
+            'phone_number' => ['required', 'regex:/[0-9]{10,}/'],
             'time_start' => ['nullable', Rule::date()->format('Y-m-d H:i')],
             'message' => 'nullable|string|max:255',
         ]);
@@ -50,7 +50,6 @@ class OrderController extends Controller
             'status' => 'required|integer|between:0,3',
             'time_start' => [Rule::date()->format('Y-m-d H:i')],
         ]);
-        // var_dump($validate);
 
         return DB::transaction(function () use ($id, $validate) {
             $order = Order::findOrFail($id);

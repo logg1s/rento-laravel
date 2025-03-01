@@ -71,8 +71,12 @@ class User extends Authenticatable implements JWTSubject
 
     protected $with = [
         'image',
-        'role'
+        'role',
     ];
+    public function order(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
 
     public function image(): BelongsTo
     {
@@ -122,6 +126,11 @@ class User extends Authenticatable implements JWTSubject
     public function viewedServiceLog(): HasMany
     {
         return $this->hasMany(ViewedServiceLog::class);
+    }
+
+    public function cancelOrder(): HasMany
+    {
+        return $this->hasMany(Order::class, 'cancel_by');
     }
 
     protected $hidden = [

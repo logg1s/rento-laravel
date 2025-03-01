@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\StatusEnum;
 use App\Models\Image;
+use App\Models\Order;
+use App\Models\Service;
 use App\Models\User;
+use App\Models\ViewedServiceLog;
 use DB;
-use Illuminate\Support\Facades\Request;
+use Illuminate\Http\Request;
 use Password;
 use Storage;
 
@@ -15,19 +19,58 @@ class UserController extends Controller
     {
         $this->middleware('auth:api');
     }
+    const LOAD_RELATION = [
+        'notification',
+    ];
     public function me()
     {
-        return response()->json(auth()->guard()->user());
+        return response()->json(auth()->guard()->user()->load(array_merge(self::LOAD_RELATION, [
+            'service' => function ($query) {
+                $query->with('comment', 'category', 'location', 'price', 'userFavorite', 'benefit', 'user');
+            },
+            'viewedServiceLog' => function ($query) {
+                $query->orderBy('id', 'desc');
+            },
+            'serviceFavorite' => function ($query) {
+                return $query->select('service_id')->get()->pluck('service_id')->toArray();
+            },
+        ])));
     }
+
+    public function getOrder(Request $request)
+    {
+        $user = auth()->guard()->user();
+        $orders = $user->order()->with([
+            'service' => function ($query) {
+                $query->with('comment', 'category', 'location', 'price', 'userFavorite', 'benefit', 'user');
+            },
+            'cancelBy',
+        ])->get();
+        return response()->json($orders);
+    }
+
 
     public function getById(Request $request, string $id)
     {
         $user = User::findOrFail($id);
-        return response()->json($user->load([
+        return response()->json($user->load(array_merge(self::LOAD_RELATION, [
             'service' => function ($query) {
                 $query->with('comment', 'category', 'location', 'price', 'userFavorite', 'benefit', 'user');
-            }
-        ]));
+            },
+        ])));
+    }
+
+    public function updateStatusOrder(Request $request, string $id)
+    {
+        $order = Order::findOrFail($id);
+        $validate = $request->validate([
+            'status' => 'required|integer|between:0,3',
+        ]);
+        $order->update([
+            'status' => $validate['status'],
+            'cancel_by' => $validate['status'] == StatusEnum::CANCELLED ? auth()->guard()->user()->id : null,
+        ]);
+        return response()->json(['message' => 'Order updated successfully', 'order' => $order]);
     }
 
 
@@ -35,7 +78,7 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'name' => ['nullable', 'max:50'],
-            'phone_number' => ['nullable', 'min:4'],
+            'phone_number' => ['nullable', 'regex:/[0-9]{10,}/'],
             'address' => ['nullable', 'max: 255'],
         ]);
 

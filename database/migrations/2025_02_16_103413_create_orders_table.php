@@ -22,6 +22,8 @@ return new class extends Migration {
             $table->string('phone_number');
             $table->dateTime('time_start')->nullable(true);
             $table->text('message')->nullable(true);
+            $table->unsignedBigInteger('cancel_by')->nullable(true);
+            $table->foreign('cancel_by')->references('id')->on('users');
             $table->softDeletes();
             $table->timestamps();
         });

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Location;
 use App\Models\Service;
+use App\Models\ViewedServiceLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
@@ -73,6 +74,10 @@ class ServiceController extends Controller
         //     Redis::expire($key, self::CACHE_TTL);
         // }
         $service = Service::findOrFail($id)->load(array_merge(self::RELATION_TABLES, self::RELATION_TABLE_DETAILS));
+        ViewedServiceLog::create([
+            'service_id' => $service->id,
+            'user_id' => auth()->guard()->user()->id,
+        ]);
         return response()->json($service);
     }
 
