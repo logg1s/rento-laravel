@@ -28,6 +28,7 @@ Route::middleware('throttle:api')->group(function () {
         Route::put('/orders/{id}/update-status', 'updateStatusOrder');
         Route::get('/{id}', 'getById');
         Route::post("/uploadAvatar", 'uploadAvatar');
+        Route::post("/uploadImage", 'uploadImage');
         Route::put('/update', 'update');
         Route::put('/updatePassword', 'updatePassword');
     });

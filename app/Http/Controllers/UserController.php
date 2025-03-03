@@ -155,4 +155,22 @@ class UserController extends Controller
             ]);
         });
     }
+       public function uploadImage(Request $request)
+    {
+        $request->validate([
+            'image' => ['required', 'image', 'mimes:jpeg,png,jpg,gif', 'max:100000']
+        ]);
+
+        return DB::transaction(function () use ($request) {
+
+            $filename = $request->file('image')->hashName();
+            $path = $request->file('image')->storeAs('images', $filename, "public");
+            $image = Image::create(['path' => Storage::url($path)]);
+
+            return response()->json([
+                'path' => Storage::url($path),
+                'message' => 'Image updated successfully'
+            ]);
+        });
+    }
 }
