@@ -14,7 +14,7 @@ use Illuminate\Notifications\Notifiable;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 
 /**
- * 
+ *
  *
  * @property int $id
  * @property string $name
@@ -67,7 +67,7 @@ class User extends Authenticatable implements JWTSubject
 {
     use Notifiable, SoftDeletes;
 
-    protected $fillable = ['name', 'phone_number', 'password', 'email', 'address', 'image_id', 'is_oauth'];
+    protected $fillable = ['name', 'phone_number', 'password', 'email', 'address', 'image_id', 'is_oauth', "expo_token"];
 
     protected $with = [
         'image',
@@ -76,6 +76,17 @@ class User extends Authenticatable implements JWTSubject
     public function order(): HasMany
     {
         return $this->hasMany(Order::class);
+    }
+
+    public function notification(): HasMany
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+
+    public function channelNotification(): BelongsToMany
+    {
+        return $this->belongsToMany(ChannelNotification::class);
     }
 
     public function image(): BelongsTo
@@ -90,7 +101,7 @@ class User extends Authenticatable implements JWTSubject
 
     public function serviceFavorite(): BelongsToMany
     {
-        return $this->BelongsToMany(Service::class, 'favorite');
+        return $this->belongsToMany(Service::class, 'favorite');
     }
 
     public function sentMessage(): HasMany
@@ -103,10 +114,6 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(Message::class, 'receiver_id');
     }
 
-    public function notification(): HasMany
-    {
-        return $this->hasMany(Notification::class);
-    }
 
     public function role(): BelongsToMany
     {

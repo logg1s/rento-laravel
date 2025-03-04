@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\Category;
+use App\Models\ChannelNotification;
 use App\Models\Role;
-use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -18,6 +18,6 @@ class DatabaseSeeder extends Seeder
 
         Role::insert([['id' => 'user'], ['id' => 'provider']]);
         Category::insert([['category_name' => 'Dọn dẹp'], ['category_name' => 'Sửa chữa']]);
-
+        ChannelNotification::insert([['id' => 'user'], ['id' => 'provider'], ['id' => 'admin']]);
     }
 }

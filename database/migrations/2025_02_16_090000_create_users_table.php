@@ -19,6 +19,7 @@ return new class extends Migration {
             $table->string('password');
             $table->text('address')->nullable();
             $table->boolean('is_oauth')->default(false);
+            $table->string("expo_token")->nullable();
             $table->softDeletes();
             $table->timestamps();
         });

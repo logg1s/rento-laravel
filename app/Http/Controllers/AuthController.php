@@ -71,6 +71,7 @@ class AuthController extends Controller
 
             $user->save();
             $user->role()->attach($role);
+            $user->channelNotification()->attach($role->id);
 
             $token = auth()->guard()->login($user);
 

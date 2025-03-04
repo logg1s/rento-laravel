@@ -21,6 +21,7 @@ class UserController extends Controller
     }
     const LOAD_RELATION = [
         'notification',
+        'channelNotification'
     ];
     public function me()
     {

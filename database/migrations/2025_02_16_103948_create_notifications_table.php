@@ -11,10 +11,9 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete("cascade");
             $table->string('title');
-            $table->text('message');
-            $table->string('type')->default('general');
+            $table->text('body');
+            $table->text('data')->nullable();
             $table->boolean('is_read')->default(false);
-            $table->softDeletes();
             $table->timestamps();
         });
     }

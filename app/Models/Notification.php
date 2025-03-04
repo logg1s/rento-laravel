@@ -2,13 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use ExpoSDK\Expo;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-
 /**
- * 
- *
  * @property int $id
  * @property int $user_id
  * @property string $title
@@ -33,11 +31,20 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Notification whereUserId($value)
  * @mixin \Eloquent
  */
+use ExpoSDK\ExpoMessage;
+
 class Notification extends Model
 {
-    protected $fillable = ['title', 'message', 'user_id'];
+    protected $fillable = ['title', 'body', 'user_id', 'data'];
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function sendToUser(int $userId, $message)
+    {
+        $user = User::findOrFail($userId);
+        (new Expo)->send($message)->to($user->expo_token)->push();
     }
 }
