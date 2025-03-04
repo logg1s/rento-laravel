@@ -14,8 +14,6 @@ use Illuminate\Notifications\Notifiable;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 
 /**
- *
- *
  * @property int $id
  * @property string $name
  * @property string $email
@@ -61,18 +59,29 @@ use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User withoutTrashed()
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Comment> $comment
  * @property-read int|null $comment_count
+ * @property string|null $address
+ * @property int $is_oauth
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Order> $cancelOrder
+ * @property-read int|null $cancel_order_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ChannelNotification> $channelNotification
+ * @property-read int|null $channel_notification_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Order> $order
+ * @property-read int|null $order_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereAddress($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereIsOauth($value)
  * @mixin \Eloquent
  */
 class User extends Authenticatable implements JWTSubject
 {
     use Notifiable, SoftDeletes;
 
-    protected $fillable = ['name', 'phone_number', 'password', 'email', 'address', 'image_id', 'is_oauth', "expo_token"];
+    protected $fillable = ['name', 'phone_number', 'password', 'email', 'address', 'image_id', 'is_oauth', 'expo_token'];
 
     protected $with = [
         'image',
         'role',
     ];
+
     public function order(): HasMany
     {
         return $this->hasMany(Order::class);
@@ -82,7 +91,6 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->hasMany(Notification::class);
     }
-
 
     public function channelNotification(): BelongsToMany
     {
@@ -113,7 +121,6 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->hasMany(Message::class, 'receiver_id');
     }
-
 
     public function role(): BelongsToMany
     {

@@ -18,7 +18,8 @@ use Storage;
 
 class AuthController extends Controller
 {
-    const KEY_LIST_EMAILS = "list:emails";
+    const KEY_LIST_EMAILS = 'list:emails';
+
     public function __construct()
     {
         $this->middleware('auth:api', ['except' => ['login', 'register', 'refresh', 'checkEmail', 'loginWithGoogle']]);
@@ -34,13 +35,11 @@ class AuthController extends Controller
         $emails = Redis::smembers(self::KEY_LIST_EMAILS);
         if (!empty($emails)) {
             $isExist = Redis::sismember(self::KEY_LIST_EMAILS, $request->email);
-            error_log("doc tu redis");
             $canRegister = !boolval($isExist);
             return response()->json(['message' => $canRegister], $canRegister ? 200 : 400);
         }
         $isExist = User::where('email', $request->email)->exists();
         if ($isExist) {
-            error_log("doc tu db");
             Redis::sadd(self::KEY_LIST_EMAILS, $request->email);
             return response()->json(['message' => false], 400);
         }
@@ -56,7 +55,8 @@ class AuthController extends Controller
             'password' => ['required', 'max:50', Password::min(8)],
             'phone_number' => ['required', 'min:4'],
             'address' => ['max: 255'],
-            'role' => [Rule::enum(RoleEnum::class)]
+            'role' => [Rule::enum(RoleEnum::class)],
+            'expo_token' => ['required', 'string']
         ]);
 
         $role = Role::findOrFail($validated['role']);
@@ -79,15 +79,14 @@ class AuthController extends Controller
         });
     }
 
-
-
     public function loginWithGoogle(Request $request)
     {
         $validate = $request->validate(
             [
                 'email' => 'required|email',
                 'name' => 'required|max:50',
-                'image_url' => 'required|url'
+                'image_url' => 'required|url',
+                'expo_token' => ['required', 'string']
             ]
         );
 
@@ -101,6 +100,7 @@ class AuthController extends Controller
                     'email' => $validate['email'],
                     'is_oauth' => true,
                     'password' => bcrypt(substr($password, 0, 8)),
+                    'expo_token' => $validate['expo_token']
                 ]);
 
                 $image = Image::create(['path' => $validate['image_url']]);
@@ -115,15 +115,14 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $credentials = request(['email', 'password']);
-
         if (!$token = auth()->guard()->attempt($credentials)) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
+        $expo_token = $request->expo_token;
+        auth()->guard()->user()->update(['expo_token' => $expo_token]);
         return $this->respondWithToken($token);
     }
-
-
 
     public function logout()
     {
@@ -132,9 +131,12 @@ class AuthController extends Controller
         return response()->json(['message' => 'Successfully logged out']);
     }
 
-    public function refresh()
+    public function refresh(Request $request)
     {
-        return $this->respondWithToken(auth()->guard()->refresh());
+        $token = auth()->guard()->refresh();
+        $validate = $request->validate(['expo_token' => 'required|string']);
+        auth()->guard()->user()->update(['expo_token' => $validate['expo_token']]);
+        return $this->respondWithToken($token);
     }
 
     protected function respondWithToken($token, $info = null)

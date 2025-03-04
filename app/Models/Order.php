@@ -45,6 +45,9 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Order whereAddress($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Order wherePhoneNumber($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Order whereStatus($value)
+ * @property int|null $cancel_by
+ * @property-read \App\Models\User|null $cancelBy
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Order whereCancelBy($value)
  * @mixin \Eloquent
  */
 class Order extends Model

@@ -11,11 +11,14 @@ class NotificationController extends Controller
     {
         $this->middleware('auth:api');
     }
+
     private const RELATION_TABLES = ['user'];
+
     private const RULE_REQUEST = [
-        'title' => 'string',
-        'message' => 'string',
-        'user_id' => 'numeric|exists:users,id',
+        'title' => 'required|string',
+        'body' => 'required|string',
+        'receive_id' => 'required|numeric|exists:users,id',
+        'data' => 'nullable|array'
     ];
 
     public function getAll(Request $request)
@@ -33,13 +36,19 @@ class NotificationController extends Controller
     public function create(Request $request)
     {
         $validated = $request->validate(self::RULE_REQUEST);
+        $user = auth()->guard()->user();
+        $result = Notification::sendToUser();
 
-        return response()->json(Notification::create($validated)->load(self::RELATION_TABLES));
+        // if ($validated['data']) {
+        //     $validated['data'] = json_encode($validated['data']);
+        // }
+        $notification = $user->notification()->create($validated)->load(self::RELATION_TABLES);
+
+        return response()->json($notification);
     }
 
     public function update(Request $request, string $id)
     {
-
         $validated = $request->validate($validated = self::RULE_REQUEST);
 
         $notification = Notification::findOrFail($id);
