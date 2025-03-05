@@ -6,6 +6,7 @@ use App\Models\Notification;
 use App\Models\Order;
 use App\Models\Service;
 use App\Models\User;
+use App\Utils\DirtyLog;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use DB;
@@ -21,7 +22,10 @@ class OrderController extends Controller
 
     public function getAll(Request $request)
     {
-        return response()->json(Order::with(self::RELATION_TABLES)->get());
+        $user = auth()->guard()->user();
+        $service = $user->service();
+        $order = Service::where('user_id', $user->id)->with('order')->get();
+        return response()->json($order);
     }
 
     public function getById(Request $request, string $id)

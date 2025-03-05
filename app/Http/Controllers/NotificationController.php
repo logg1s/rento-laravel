@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Notification;
 use App\Models\Service;
 use App\Models\User;
+use App\Utils\DirtyLog;
 use Illuminate\Http\Request;
 
 class NotificationController extends Controller
@@ -56,6 +57,7 @@ class NotificationController extends Controller
         $sender = auth()->guard()->user();
         $receiver = User::findOrFail($id);
         if ($receiver->expo_token) {
+            DirtyLog::log($receiver->expo_token);
             $title = '💬 ' . $sender->name;
             $body = $validate['body'];
             $data = ['type' => 'message', 'id' => $id];

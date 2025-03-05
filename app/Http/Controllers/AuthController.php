@@ -121,6 +121,8 @@ class AuthController extends Controller
 
     public function logout()
     {
+        $user = auth()->guard()->user();
+        $user->update(['expo_token' => null]);
         auth()->guard()->logout();
 
         return response()->json(['message' => 'Successfully logged out']);
