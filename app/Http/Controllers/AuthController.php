@@ -56,7 +56,6 @@ class AuthController extends Controller
             'phone_number' => ['required', 'min:4'],
             'address' => ['max: 255'],
             'role' => [Rule::enum(RoleEnum::class)],
-            'expo_token' => ['required', 'string']
         ]);
 
         $role = Role::findOrFail($validated['role']);
@@ -86,7 +85,6 @@ class AuthController extends Controller
                 'email' => 'required|email',
                 'name' => 'required|max:50',
                 'image_url' => 'required|url',
-                'expo_token' => ['required', 'string']
             ]
         );
 
@@ -100,7 +98,6 @@ class AuthController extends Controller
                     'email' => $validate['email'],
                     'is_oauth' => true,
                     'password' => bcrypt(substr($password, 0, 8)),
-                    'expo_token' => $validate['expo_token']
                 ]);
 
                 $image = Image::create(['path' => $validate['image_url']]);
@@ -119,8 +116,6 @@ class AuthController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $expo_token = $request->expo_token;
-        auth()->guard()->user()->update(['expo_token' => $expo_token]);
         return $this->respondWithToken($token);
     }
 
@@ -134,8 +129,6 @@ class AuthController extends Controller
     public function refresh(Request $request)
     {
         $token = auth()->guard()->refresh();
-        $validate = $request->validate(['expo_token' => 'required|string']);
-        auth()->guard()->user()->update(['expo_token' => $validate['expo_token']]);
         return $this->respondWithToken($token);
     }
 

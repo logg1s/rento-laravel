@@ -2,12 +2,12 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BenefitController;
-use App\Http\Controllers\OrderController;
-use App\Http\Controllers\PriceController;
-use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PriceController;
+use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -27,8 +27,8 @@ Route::middleware('throttle:api')->group(function () {
         Route::get('/orders', 'getOrder');
         Route::put('/orders/{id}/update-status', 'updateStatusOrder');
         Route::get('/{id}', 'getById');
-        Route::post("/uploadAvatar", 'uploadAvatar');
-        Route::post("/uploadImage", 'uploadImage');
+        Route::post('/uploadAvatar', 'uploadAvatar');
+        Route::post('/uploadImage', 'uploadImage');
         Route::put('/update', 'update');
         Route::put('/updatePassword', 'updatePassword');
     });
@@ -53,6 +53,8 @@ Route::middleware('throttle:api')->group(function () {
         Route::post('/', 'create');
         Route::put('/{id}', 'update');
         Route::delete('/{id}', 'delete');
+        Route::post('/token/register', 'registerToken');
+        Route::delete('/token/delete', 'deleteToken');
     });
 
     Route::controller(PriceController::class)->prefix('prices')->group(function ($router) {
@@ -62,7 +64,6 @@ Route::middleware('throttle:api')->group(function () {
         Route::put('/{id}', 'update');
         Route::delete('/{id}', 'delete');
     });
-
 
     Route::controller(BenefitController::class)->prefix('benefits')->group(function ($router) {
         Route::get('/', 'getAll');

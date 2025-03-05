@@ -46,17 +46,22 @@ class Notification extends Model
         return $this->belongsTo(User::class);
     }
 
-    // public function sendToUser(int $userId, $title, $body, $data)
-    // {
-    //     $user = User::findOrFail($userId);
-    //     $message = ['title' => $title, 'body' => $body, 'data' => $data];
-    //     $response = (new Expo)->send($message)->to($user->expo_token)->push();
-    //     return $response->getData();
-    // }
-
-    public static function sendToUser()
+    public static function sendToUser(int $userId, $title, $body, $data, bool $isSaveToDB = false)
     {
-        $response = (new Expo)->send([['title' => 'test from laravel', 'body' => 'day la thong bao thu nghiem']])->to('ExponentPushToken[5_BAr_JDUwFKtij-1jvNSN]')->push();
+        $user = User::findOrFail($userId);
+        if (!$user->expo_token)
+            return;
+
+        $message = ['title' => $title, 'body' => $body, 'channelId' => 'default'];
+        if ($data) {
+            $message['data'] = $data;
+        }
+
+        $response = (new Expo)->send([$message])->to($user->expo_token)->push();
+
+        if ($isSaveToDB) {
+            $user->notification()->create(['title' => $title, 'body' => $body, json_encode($data)]);
+        }
         return $response->getData();
     }
 }

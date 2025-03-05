@@ -14,6 +14,8 @@ use Illuminate\Notifications\Notifiable;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 
 /**
+ * 
+ *
  * @property int $id
  * @property string $name
  * @property string $email
@@ -69,6 +71,8 @@ use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
  * @property-read int|null $order_count
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereAddress($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereIsOauth($value)
+ * @property string|null $expo_token
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereExpoToken($value)
  * @mixin \Eloquent
  */
 class User extends Authenticatable implements JWTSubject

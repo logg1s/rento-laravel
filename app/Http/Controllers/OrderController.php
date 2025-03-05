@@ -1,10 +1,15 @@
 <?php
 namespace App\Http\Controllers;
+
 use App\Http\Controllers\Controller;
+use App\Models\Notification;
 use App\Models\Order;
-use DB;
+use App\Models\Service;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use DB;
+
 class OrderController extends Controller
 {
     public function __construct()
@@ -24,6 +29,40 @@ class OrderController extends Controller
         return response()->json(Order::findOrFail($id)->load(self::RELATION_TABLES));
     }
 
+    public function sendNewOrderMessage(Service $service, User $user)
+    {
+        $title = 'Bạn có đơn dịch vụ mới';
+        $body = 'Đơn dịch vụ ' . $service->service_name . ' của người dùng ' . $user->name;
+        $data = ['tag' => 'order'];
+        Notification::sendToUser($service->user->id, $title, $body, $data);
+    }
+
+    public function sendUpdateOrderMessage(Service $service, User $user, int $status)
+    {
+        $title = '';
+        $body = '';
+        $data = ['tag' => 'order'];
+        switch ($status) {
+            case 1:
+                $title = '⏳ Đơn dịch vụ đang trong trạng thái chờ';
+                $body = 'Dịch vụ ' . $service->service_name . 'đang chờ nhà cung cấp xét duyệt';
+                break;
+            case 2:
+                $title = 'Dịch vụ đang thực hiện công việc';
+                $body = 'Dịch vụ ' . $service->service_name . ' đang được thực hiện';
+                break;
+            case 3:
+                $title = '✅ Dịch vụ hoàn tất';
+                $body = 'Dịch vụ ' . $service->service_name . ' đã hoàn thành';
+                break;
+            default:
+                $title = '❌ Dịch vụ đã được hủy';
+                $body = $service->service_name . ' đã được hủy';
+                break;
+        }
+        Notification::sendToUser($user->id, $title, $body, $data);
+    }
+
     public function create(Request $request)
     {
         $validate = $request->validate([
@@ -35,11 +74,13 @@ class OrderController extends Controller
             'time_start' => ['nullable', Rule::date()->format('Y-m-d H:i')],
             'message' => 'nullable|string|max:255',
         ]);
-        $user = auth()->user();
-        return DB::transaction(function () use ($user, $validate) {
+        $user = auth()->guard()->user();
+        $service = Service::findOrFail($validate['service_id']);
+        return DB::transaction(function () use ($user, $validate, $service) {
             $order = Order::create(
                 array_merge(['user_id' => $user->id], $validate),
             );
+            $this->sendNewOrderMessage($service, $user);
             return response()->json($order->load(self::RELATION_TABLES));
         });
     }
@@ -56,6 +97,7 @@ class OrderController extends Controller
             $order->update([
                 $validate
             ]);
+            $this->sendUpdateOrderMessage($order->service, $order->user, $validate['status']);
             return response()->json($order->load(self::RELATION_TABLES));
         });
     }

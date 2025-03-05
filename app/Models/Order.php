@@ -6,8 +6,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * 
- *
  * @property int $id
  * @property int $user_id
  * @property int $service_id
@@ -64,6 +62,7 @@ class Order extends Model
         'message',
         'cancel_by',
     ];
+
     public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);
