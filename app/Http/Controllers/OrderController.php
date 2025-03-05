@@ -34,7 +34,7 @@ class OrderController extends Controller
         $title = 'Bạn có đơn dịch vụ mới';
         $body = 'Đơn dịch vụ ' . $service->service_name . ' của người dùng ' . $user->name;
         $data = ['tag' => 'order'];
-        Notification::sendToUser($service->user->id, $title, $body, $data);
+        Notification::sendToUser($service->user->id, $title, $body, $data, true);
     }
 
     public function sendUpdateOrderMessage(Service $service, User $user, int $status)
@@ -60,7 +60,7 @@ class OrderController extends Controller
                 $body = $service->service_name . ' đã được hủy';
                 break;
         }
-        Notification::sendToUser($user->id, $title, $body, $data);
+        Notification::sendToUser($user->id, $title, $body, $data, true);
     }
 
     public function create(Request $request)

@@ -39,14 +39,14 @@ use ExpoSDK\ExpoMessage;
 
 class Notification extends Model
 {
-    protected $fillable = ['title', 'body', 'user_id', 'data'];
+    protected $fillable = ['title', 'body', 'user_id', 'data', 'is_read'];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public static function sendToUser(int $userId, $title, $body, $data, bool $isSaveToDB = false)
+    public static function sendToUser(int $userId, $title, $body, $data, bool $isSaveToDB = false, string $channelId = 'default')
     {
         $user = User::findOrFail($userId);
         if (!$user->expo_token)

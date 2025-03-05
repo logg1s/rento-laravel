@@ -68,4 +68,18 @@ class NotificationController extends Controller
         Notification::findOrFail($id)->delete();
         return response()->json(['message' => 'success']);
     }
+
+    public function readedAll(Request $request)
+    {
+        $user = auth()->guard()->user();
+        $user->notification()->update(['is_read' => 1]);
+        return response()->json(['message' => 'sucesss']);
+    }
+
+    public function readedById(Request $request, string $id)
+    {
+        $notification = Notification::findOrFail($id);
+        $notification->update(['is_read' => 1]);
+        return response()->json(['message' => 'sucesss']);
+    }
 }
