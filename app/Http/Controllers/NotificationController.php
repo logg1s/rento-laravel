@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Notification;
+use App\Models\Service;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -47,6 +48,20 @@ class NotificationController extends Controller
     public function getById(Request $request, string $id)
     {
         return response()->json(Notification::findOrFail($id)->load(self::RELATION_TABLES));
+    }
+
+    public function chatNotification(Request $request, string $id)
+    {
+        $validate = $request->validate(['body' => 'required|string']);
+        $sender = auth()->guard()->user();
+        $receiver = User::findOrFail($id);
+        if ($receiver->expo_token) {
+            $title = '💬 ' . $sender->name;
+            $body = $validate['body'];
+            $data = ['type' => 'message', 'id' => $id];
+            Notification::sendToUser($id, $title, $body, $data, false, 'messaging');
+        }
+        return response()->json(['message' => 'success']);
     }
 
     public function create(Request $request)

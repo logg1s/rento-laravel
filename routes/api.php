@@ -51,6 +51,7 @@ Route::middleware('throttle:api')->group(function () {
         Route::get('/', 'getAll');
         Route::get('/{id}', 'getById');
         Route::post('/', 'create');
+        Route::post('/chat/{id}', 'chatNotification');
         Route::put('/readed/all', 'readedAll');
         Route::put('/readed/{id}', 'readedById');
         Route::put('/{id}', 'update');
