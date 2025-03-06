@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Utils\DirtyLog;
 use ExpoSDK\Expo;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
@@ -45,7 +46,7 @@ class Notification extends Model
     public static function sendToUser(int $userId, $title, $body, $data, bool $isSaveToDB = false, string $channelId = 'default')
     {
         $user = User::findOrFail($userId);
-        if (!$user->expo_token)
+        if (!$user->userSetting->is_notification || !$user->expo_token)
             return;
 
         $message = ['title' => $title, 'body' => $body, 'channelId' => $channelId];

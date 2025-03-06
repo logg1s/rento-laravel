@@ -57,10 +57,9 @@ class NotificationController extends Controller
         $sender = auth()->guard()->user();
         $receiver = User::findOrFail($id);
         if ($receiver->expo_token) {
-            DirtyLog::log($receiver->expo_token);
             $title = '💬 ' . $sender->name;
             $body = $validate['body'];
-            $data = ['type' => 'message', 'id' => $id];
+            $data = ['type' => 'message', 'id' => $sender->id];
             Notification::sendToUser($id, $title, $body, $data, false, 'messaging');
         }
         return response()->json(['message' => 'success']);

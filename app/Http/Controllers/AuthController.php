@@ -71,6 +71,7 @@ class AuthController extends Controller
             $user->save();
             $user->role()->attach($role);
             $user->channelNotification()->attach($role->id);
+            $user->userSetting()->create(['is_notification' => true]);
 
             $token = auth()->guard()->login($user);
 
@@ -103,6 +104,10 @@ class AuthController extends Controller
                 $image = Image::create(['path' => $validate['image_url']]);
                 $user->image()->associate($image);
                 $user->save();
+                $role = Role::findOrFail(RoleEnum::USER);
+                $user->role()->attach($role);
+                $user->channelNotification()->attach($role->id);
+                $user->userSetting()->create(['is_notification' => true]);
             }
             $token = auth()->guard()->login($user);
             return $this->respondWithToken($token);

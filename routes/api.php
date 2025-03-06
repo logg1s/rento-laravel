@@ -31,6 +31,7 @@ Route::middleware('throttle:api')->group(function () {
         Route::post('/uploadImage', 'uploadImage');
         Route::put('/update', 'update');
         Route::put('/updatePassword', 'updatePassword');
+        Route::post("/setting", "changeSetting");
     });
 
     Route::controller(ServiceController::class)->prefix('services')->group(function ($router) {

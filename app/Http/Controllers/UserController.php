@@ -38,6 +38,14 @@ class UserController extends Controller
         ])));
     }
 
+    public function changeSetting(Request $request)
+    {
+        $validate = $request->validate(['is_notification' => 'required|boolean']);
+        $user = auth()->guard()->user();
+        $user->userSetting()->updateOrCreate([], $validate);
+        return response()->json($user->load('userSetting'));
+    }
+
     public function getOrder(Request $request)
     {
         $user = auth()->guard()->user();
@@ -156,7 +164,7 @@ class UserController extends Controller
             ]);
         });
     }
-       public function uploadImage(Request $request)
+    public function uploadImage(Request $request)
     {
         $request->validate([
             'image' => ['required', 'image', 'mimes:jpeg,png,jpg,gif', 'max:100000']

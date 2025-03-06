@@ -79,6 +79,7 @@ class User extends Authenticatable implements JWTSubject
     protected $with = [
         'image',
         'role',
+        'userSetting'
     ];
 
     public function order(): HasMany

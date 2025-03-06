@@ -28,6 +28,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class UserSetting extends Model
 {
+    protected $fillable = ['is_notification'];
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
