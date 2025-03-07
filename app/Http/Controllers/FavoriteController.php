@@ -18,15 +18,16 @@ class FavoriteController extends Controller
     public function __construct()
     {
         $this->middleware('auth:api');
+        $this->middleware('check.status');
     }
 
     public function getFavorites()
     {
         $user = Auth::user();
-            $favorites = $user->serviceFavorite()
-                ->with(self::RELATION_TABLES)
-                ->where('favorite.user_id', $user->id)
-                ->orderBy('id', 'desc')->get();
+        $favorites = $user->serviceFavorite()
+            ->with(self::RELATION_TABLES)
+            ->where('favorite.user_id', $user->id)
+            ->orderBy('id', 'desc')->get();
 
         return response()->json($favorites);
     }
@@ -39,7 +40,7 @@ class FavoriteController extends Controller
         $user = auth()->guard()->user();
         $service = Service::findOrFail($serviceId);
         error_log($isLiked);
-        if($isLiked){
+        if ($isLiked) {
             $user->serviceFavorite()->attach($service);
         } else {
             $user->serviceFavorite()->detach($service);

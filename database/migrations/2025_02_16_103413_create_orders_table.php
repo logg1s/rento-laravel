@@ -17,7 +17,7 @@ return new class extends Migration {
             $table->foreignId('service_id')->constrained();
             $table->foreignId('price_id')->constrained();
             $table->bigInteger('price_final_value');
-            $table->unsignedTinyInteger('status')->default(StatusEnum::PENDING);
+            $table->unsignedTinyInteger('status')->default(StatusEnum::PENDING->value);
             $table->text('address');
             $table->string('phone_number');
             $table->dateTime('time_start')->nullable(true);

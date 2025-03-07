@@ -20,6 +20,8 @@ Route::middleware('throttle:api')->group(function () {
         Route::get('/validate', 'validateToken');
         Route::post('/checkEmail', 'checkEmail');
         Route::post('/login-google', 'loginWithGoogle');
+        Route::post('/verify-code', 'verifyCode');
+        Route::post('/resend-verification', 'resendVerificationCode');
     });
 
     Route::controller(UserController::class)->prefix('users')->group(function ($router) {
@@ -32,6 +34,8 @@ Route::middleware('throttle:api')->group(function () {
         Route::put('/update', 'update');
         Route::put('/updatePassword', 'updatePassword');
         Route::post("/setting", "changeSetting");
+        Route::delete('/viewed/{id}', 'deleteViewedServiceByServiceId');
+        Route::delete('/delete/viewed/all', 'deleteAllViewedService');
     });
 
     Route::controller(ServiceController::class)->prefix('services')->group(function ($router) {
@@ -53,7 +57,7 @@ Route::middleware('throttle:api')->group(function () {
         Route::get('/{id}', 'getById');
         Route::post('/', 'create');
         Route::post('/chat/{id}', 'chatNotification');
-        Route::put('/readed/all', 'readedAll');
+        Route::put('/read/all', 'readedAll');
         Route::put('/readed/{id}', 'readedById');
         Route::put('/{id}', 'update');
         Route::delete('/{id}', 'delete');

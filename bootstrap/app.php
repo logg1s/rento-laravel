@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\JsonResponse;
+use App\Http\Middleware\CheckUserStatus;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Foundation\Application;
@@ -14,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->api()->append([JsonResponse::class]);
+        $middleware->alias([
+            'check.status' => CheckUserStatus::class
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
     })

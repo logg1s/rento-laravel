@@ -3,26 +3,35 @@
 namespace App\Http\Controllers;
 
 use App\Enums\RoleEnum;
+use App\Enums\UserStatusEnum;
 use App\Http\Controllers\Controller;
+use App\Jobs\SendVerificationEmail;
+use App\Mail\VerificationEmail;
+use App\Models\EmailVerification;
 use App\Models\Image;
 use App\Models\Role;
 use App\Models\Service;
 use App\Models\User;
+use App\Utils\DirtyLog;
 use Illuminate\Http\Request;
 use Illuminate\Session\Store;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\Rule;
 use Storage;
+use Str;
 
 class AuthController extends Controller
 {
-    const KEY_LIST_EMAILS = 'list:emails';
+    const OTP_EXPIRY_MINUTES = 5;
+    const RESEND_OTP_DELAY_MINUTES = 1;
 
     public function __construct()
     {
-        $this->middleware('auth:api', ['except' => ['login', 'register', 'refresh', 'checkEmail', 'loginWithGoogle']]);
+        $this->middleware('auth:api', ['except' => ['login', 'register', 'refresh', 'checkEmail', 'loginWithGoogle', 'verifyCode', 'resendVerificationCode']]);
+        $this->middleware('check.status', ['except' => ['login', 'register', 'refresh', 'checkEmail', 'loginWithGoogle', 'verifyCode', 'resendVerificationCode']]);
     }
 
     public function validateToken(Request $request)
@@ -32,18 +41,10 @@ class AuthController extends Controller
 
     public function checkEmail(Request $request)
     {
-        $emails = Redis::smembers(self::KEY_LIST_EMAILS);
-        if (!empty($emails)) {
-            $isExist = Redis::sismember(self::KEY_LIST_EMAILS, $request->email);
-            $canRegister = !boolval($isExist);
-            return response()->json(['message' => $canRegister], $canRegister ? 200 : 400);
-        }
         $isExist = User::where('email', $request->email)->exists();
         if ($isExist) {
-            Redis::sadd(self::KEY_LIST_EMAILS, $request->email);
             return response()->json(['message' => false], 400);
         }
-        Redis::srem(self::KEY_LIST_EMAILS, $request->email);
         return response()->json(['message' => true]);
     }
 
@@ -67,11 +68,14 @@ class AuthController extends Controller
             $user->password = bcrypt($validated['password']);
             $user->phone_number = $validated['phone_number'];
             $user->address = $validated['address'];
-
+            $user->status = UserStatusEnum::PENDING->value;
             $user->save();
             $user->role()->attach($role);
             $user->channelNotification()->attach($role->id);
             $user->userSetting()->create(['is_notification' => true]);
+
+            // Gửi mã xác thực sau khi đăng ký
+            $this->sendVerificationCode($user->email);
 
             $token = auth()->guard()->login($user);
 
@@ -99,12 +103,13 @@ class AuthController extends Controller
                     'email' => $validate['email'],
                     'is_oauth' => true,
                     'password' => bcrypt(substr($password, 0, 8)),
+                    'status' => UserStatusEnum::ACTIVE->value,
                 ]);
 
                 $image = Image::create(['path' => $validate['image_url']]);
                 $user->image()->associate($image);
                 $user->save();
-                $role = Role::findOrFail(RoleEnum::USER);
+                $role = Role::findOrFail(RoleEnum::USER->value);
                 $user->role()->attach($role);
                 $user->channelNotification()->attach($role->id);
                 $user->userSetting()->create(['is_notification' => true]);
@@ -121,7 +126,7 @@ class AuthController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        return $this->respondWithToken($token);
+        return $this->respondWithToken($token, auth()->guard()->user());
     }
 
     public function logout()
@@ -137,6 +142,105 @@ class AuthController extends Controller
     {
         $token = auth()->guard()->refresh();
         return $this->respondWithToken($token);
+    }
+
+    /**
+     * Gửi mã xác thực đến email
+     */
+    public function sendVerificationCode(string $email)
+    {
+        $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+        EmailVerification::updateOrCreate(
+            ['email' => $email],
+            [
+                'code' => $code,
+                'expires_at' => now()->addMinutes(self::OTP_EXPIRY_MINUTES)
+            ]
+        );
+
+        // Gửi email trong background
+        SendVerificationEmail::dispatch($email, $code);
+    }
+
+    /**
+     * Xác thực mã code
+     */
+    public function verifyCode(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => ['required', 'email', 'max:100'],
+            'code' => ['required', 'string', 'size:6'],
+        ]);
+
+        $verification = EmailVerification::where('email', $validated['email'])
+            ->where('code', $validated['code'])
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if (!$verification) {
+            return response()->json([
+                'message' => 'Mã xác thực không hợp lệ hoặc đã hết hạn'
+            ], 400);
+        }
+
+        $verification->delete();
+
+        // Cập nhật trạng thái người dùng nếu đang ở trạng thái PENDING
+        $user = User::where('email', $validated['email'])->first();
+        if ($user && $user->status === UserStatusEnum::PENDING->value) {
+            $user->status = UserStatusEnum::ACTIVE->value;
+            $user->save();
+        }
+
+        return response()->json([
+            'message' => 'Xác thực thành công'
+        ]);
+    }
+
+    /**
+     * Gửi lại mã xác thực
+     */
+    public function resendVerificationCode(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => ['required', 'email', 'max:100'],
+        ]);
+
+        // Kiểm tra xem email có tồn tại trong hệ thống không
+        $user = User::where('email', $validated['email'])->first();
+        if (!$user) {
+            return response()->json([
+                'message' => 'Email không tồn tại trong hệ thống'
+            ], 400);
+        }
+
+        // Kiểm tra trạng thái user
+
+        if ($user->status != UserStatusEnum::PENDING->value) {
+            return response()->json([
+                'message' => 'Tài khoản đã được xác thực'
+            ], 400);
+        }
+
+        // Kiểm tra thời gian gửi lại mã
+        $lastVerification = EmailVerification::where('email', $validated['email'])
+            ->where('created_at', '>', now()->subMinutes(self::RESEND_OTP_DELAY_MINUTES))
+            ->first();
+
+        if ($lastVerification) {
+            $remainingTime = now()->diffInSeconds($lastVerification->created_at->addMinutes(self::RESEND_OTP_DELAY_MINUTES));
+            return response()->json([
+                'message' => 'Vui lòng đợi ' . ceil($remainingTime / 60) . ' giây nữa để gửi lại mã'
+            ], 429);
+        }
+
+        // Gửi mã mới
+        $this->sendVerificationCode($validated['email']);
+
+        return response()->json([
+            'message' => 'Mã xác thực mới đã được gửi đến email của bạn'
+        ]);
     }
 
     protected function respondWithToken($token, $info = null)

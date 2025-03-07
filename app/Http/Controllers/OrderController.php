@@ -16,6 +16,7 @@ class OrderController extends Controller
     public function __construct()
     {
         $this->middleware('auth:api');
+        $this->middleware('check.status');
     }
 
     const RELATION_TABLES = ['user', 'service', 'price'];

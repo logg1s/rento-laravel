@@ -19,6 +19,7 @@ class ServiceController extends Controller
     public function __construct()
     {
         $this->middleware('auth:api');
+        $this->middleware('check.status');
     }
 
     public function getKeyAll($size, $cursor)

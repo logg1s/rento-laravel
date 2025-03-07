@@ -13,6 +13,7 @@ class NotificationController extends Controller
     public function __construct()
     {
         $this->middleware('auth:api');
+        $this->middleware('check.status');
     }
 
     private const RELATION_TABLES = ['user'];

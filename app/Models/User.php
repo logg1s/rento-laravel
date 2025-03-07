@@ -67,14 +67,15 @@ use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePhoneNumber($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User withTrashed()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User withoutTrashed()
+ * @method static \Illuminate\Databa
+ * Builder<static>|User withoutTrashed()
  * @mixin \Eloquent
  */
 class User extends Authenticatable implements JWTSubject
 {
     use Notifiable, SoftDeletes;
 
-    protected $fillable = ['name', 'phone_number', 'password', 'email', 'address', 'image_id', 'is_oauth', 'expo_token'];
+    protected $fillable = ['name', 'phone_number', 'password', 'email', 'address', 'image_id', 'is_oauth', 'expo_token', 'status'];
 
     protected $with = [
         'image',

@@ -18,6 +18,7 @@ class UserController extends Controller
     public function __construct()
     {
         $this->middleware('auth:api');
+        $this->middleware('check.status');
     }
     const LOAD_RELATION = [
         'notification',
@@ -77,7 +78,7 @@ class UserController extends Controller
         ]);
         $order->update([
             'status' => $validate['status'],
-            'cancel_by' => $validate['status'] == StatusEnum::CANCELLED ? auth()->guard()->user()->id : null,
+            'cancel_by' => $validate['status'] == StatusEnum::CANCELLED->value ? auth()->guard()->user()->id : null,
         ]);
         return response()->json(['message' => 'Order updated successfully', 'order' => $order]);
     }
@@ -182,4 +183,17 @@ class UserController extends Controller
             ]);
         });
     }
+    public function deleteViewedServiceByServiceId(Request $request, string $id)
+    {
+        $user = auth()->guard()->user();
+        $user->viewedServiceLog()->where('service_id', $id)->delete();
+        return response()->json(['message' => 'Viewed service deleted successfully']);
+    }
+    public function deleteAllViewedService(Request $request)
+    {
+        $user = auth()->guard()->user();
+        $user->viewedServiceLog()->delete();
+        return response()->json(['message' => 'All viewed services deleted successfully']);
+    }
 }
+
