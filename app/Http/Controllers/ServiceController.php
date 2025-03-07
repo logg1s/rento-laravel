@@ -63,21 +63,24 @@ class ServiceController extends Controller
 
     public function getById(Request $request, string $id)
     {
-        // $key = "service:{$id}";
-
-        // $service = Redis::get($key);
-        // if ($service) {
-        //     $service = json_decode($service, true);
-        // } else {
-        //     $service = Service::findOrFail($id)->load(array_merge(self::RELATION_TABLES, self::RELATION_TABLE_DETAILS));
-        //     Redis::set($key, json_encode($service));
-        //     Redis::expire($key, self::CACHE_TTL);
-        // }
         $service = Service::findOrFail($id)->load(array_merge(self::RELATION_TABLES, self::RELATION_TABLE_DETAILS));
-        ViewedServiceLog::create([
+        ViewedServiceLog::updateOrCreate([
             'service_id' => $service->id,
             'user_id' => auth()->guard()->user()->id,
+        ], [
+            'updated_at' => now()
         ]);
+
+        $suggestedServices = Service::where('id', '!=', $service->id)
+            ->where(function ($query) use ($service) {
+                $query->where('category_id', $service->category_id)
+                    ->orWhere('location_id', $service->location_id);
+            })
+            ->limit(5)
+            ->pluck('id');
+
+        $service->suggested_services = $suggestedServices;
+
         return response()->json($service);
     }
 

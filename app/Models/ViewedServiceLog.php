@@ -33,7 +33,9 @@ class ViewedServiceLog extends Model
     protected $fillable = [
         'user_id',
         'service_id',
+        'updated_at',
     ];
+
 
     public function service(): BelongsTo
     {
