@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\StatusEnum;
 use App\Models\Image;
 use App\Models\Order;
+use App\Models\Role;
 use App\Models\Service;
 use App\Models\User;
 use App\Models\ViewedServiceLog;
@@ -12,7 +13,8 @@ use DB;
 use Illuminate\Http\Request;
 use Password;
 use Storage;
-
+use Illuminate\Validation\Rule;
+use App\Enums\RoleEnum;
 class UserController extends Controller
 {
     public function __construct()
@@ -90,10 +92,15 @@ class UserController extends Controller
             'name' => ['nullable', 'max:50'],
             'phone_number' => ['nullable', 'regex:/[0-9]{10,}/'],
             'address' => ['nullable', 'max: 255'],
+            'role' => ['nullable', Rule::enum(RoleEnum::class)],
         ]);
+        $user = auth()->guard()->user();
 
-        return DB::transaction(function () use ($validated) {
-            $user = auth()->guard()->user();
+        return DB::transaction(function () use ($validated, $user) {
+            if (!empty($validated['role'])) {
+                $role = Role::findOrFail($validated['role']);
+                $user->role()->sync($role);
+            }
             $user->update($validated);
             return response()->json($user);
         });
