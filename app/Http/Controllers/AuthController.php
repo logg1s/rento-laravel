@@ -30,8 +30,8 @@ class AuthController extends Controller
 
     public function __construct()
     {
-        $this->middleware('auth:api', ['except' => ['login', 'register', 'refresh', 'checkEmail', 'loginWithGoogle', 'verifyCode', 'resendVerificationCode']]);
-        $this->middleware('check.status', ['except' => ['login', 'register', 'refresh', 'checkEmail', 'loginWithGoogle', 'verifyCode', 'resendVerificationCode']]);
+        $this->middleware('auth:api', ['except' => ['login', 'register', 'refresh', 'checkEmail', 'loginWithGoogle', 'verifyCode', 'resendVerificationCode', 'forgotPassword', 'verifyForgotPassword']]);
+        $this->middleware('check.status', ['except' => ['login', 'register', 'refresh', 'checkEmail', 'loginWithGoogle', 'verifyCode', 'resendVerificationCode', 'forgotPassword', 'verifyForgotPassword']]);
     }
 
     public function validateToken(Request $request)
@@ -240,6 +240,80 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Mã xác thực mới đã được gửi đến email của bạn'
+        ]);
+    }
+
+    /**
+     * Gửi yêu cầu quên mật khẩu
+     */
+    public function forgotPassword(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => ['required', 'email', 'max:100'],
+        ]);
+
+        // Kiểm tra email có tồn tại và là tài khoản thường
+        $user = User::where('email', $validated['email'])
+            ->where('is_oauth', false)
+            ->where('status', UserStatusEnum::ACTIVE->value)
+            ->first();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'Email không tồn tại hoặc không thể thực hiện quên mật khẩu'
+            ], 400);
+        }
+
+        // Gửi mã OTP
+        $this->sendVerificationCode($validated['email']);
+
+        return response()->json([
+            'message' => 'Mã xác thực đã được gửi đến email của bạn'
+        ]);
+    }
+
+    /**
+     * Xác thực OTP và đặt lại mật khẩu
+     */
+    public function verifyForgotPassword(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => ['required', 'email', 'max:100'],
+            'code' => ['required', 'string', 'size:6'],
+            'new_password' => ['required', 'max:50', Password::min(8)],
+        ]);
+
+        // Kiểm tra email có tồn tại và là tài khoản thường
+        $user = User::where('email', $validated['email'])
+            ->where('is_oauth', false)
+            ->where('status', UserStatusEnum::ACTIVE->value)
+            ->first();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'Email không tồn tại hoặc không thể thực hiện quên mật khẩu'
+            ], 400);
+        }
+
+        // Xác thực mã OTP
+        $verification = EmailVerification::where('email', $validated['email'])
+            ->where('code', $validated['code'])
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if (!$verification) {
+            return response()->json([
+                'message' => 'Mã xác thực không hợp lệ hoặc đã hết hạn'
+            ], 400);
+        }
+
+        $verification->delete();
+
+        $user->password = bcrypt($validated['new_password']);
+        $user->save();
+
+        return response()->json([
+            'message' => 'Đặt lại mật khẩu thành công'
         ]);
     }
 

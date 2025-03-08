@@ -22,6 +22,8 @@ Route::middleware('throttle:api')->group(function () {
         Route::post('/login-google', 'loginWithGoogle');
         Route::post('/verify-code', 'verifyCode');
         Route::post('/resend-verification', 'resendVerificationCode');
+        Route::post('/forgot-password', 'forgotPassword');
+        Route::post('/verify-forgot-password', 'verifyForgotPassword');
     });
 
     Route::controller(UserController::class)->prefix('users')->group(function ($router) {
