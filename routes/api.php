@@ -89,9 +89,12 @@ Route::middleware('throttle:api')->group(function () {
         Route::get('/', 'getAll');
         Route::get('/{id}', 'getById');
         Route::get('/service/{serviceId}', 'getByServiceId');
+        Route::get('/independent/{serviceId}', 'getIndependent');
         Route::post('/', 'create');
         Route::put('/{id}', 'update');
         Route::delete('/{id}', 'delete');
+        Route::post('/{id}/detach-price', 'detachPrice');
+        Route::post('/attach-to-price/{priceId}', 'attachToPrice');
     });
 
     Route::controller(FavoriteController::class)->prefix('favorites')->group(function () {
