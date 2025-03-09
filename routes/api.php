@@ -7,8 +7,11 @@ use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PriceController;
+use App\Http\Controllers\ProvinceController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ProviderStatisticController;
+use App\Http\Controllers\LocationController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('throttle:api')->group(function () {
@@ -52,6 +55,13 @@ Route::middleware('throttle:api')->group(function () {
     Route::controller(\App\Http\Controllers\CategoryController::class)->prefix('categories')->group(function ($router) {
         Route::get('/', 'getAll');
         Route::get('/{id}', 'getById');
+    });
+
+    Route::controller(ProvinceController::class)->prefix('provinces')->group(function ($router) {
+        Route::get('/', 'index');
+        Route::get('/search', 'search');
+        Route::get('/{id}', 'show');
+        Route::post('/find-by-coordinates', 'findByCoordinates');
     });
 
     Route::controller(NotificationController::class)->prefix('notifications')->group(function ($router) {
@@ -104,4 +114,45 @@ Route::middleware('throttle:api')->group(function () {
         Route::put('/{id}', 'update');
         Route::delete('/{id}', 'delete');
     });
+});
+
+Route::middleware(['throttle:api', 'auth:api'])->prefix('provider')->group(function () {
+    // Quản lý dịch vụ
+    Route::controller(ServiceController::class)->prefix('services')->group(function () {
+        Route::get('/my-services', 'getMyServices');
+        Route::get('/{id}', 'getProviderServiceById');
+        Route::post('/', 'create');
+        Route::put('/{id}', 'update');
+        Route::delete('/{id}/{force?}', 'delete');
+
+        // Quản lý giá dịch vụ
+        Route::post('/{serviceId}/prices', 'addServicePrice');
+        Route::put('/{serviceId}/prices/{priceId}', 'updateServicePrice');
+        Route::delete('/{serviceId}/prices/{priceId}', 'deleteServicePrice');
+    });
+
+    // Quản lý đơn hàng
+    Route::controller(OrderController::class)->prefix('orders')->group(function () {
+        Route::get('/my-orders', 'getProviderOrders');
+        Route::put('/{id}/status', 'updateOrderStatus');
+    });
+
+    // Quản lý đánh giá
+    Route::controller(CommentController::class)->prefix('comments')->group(function () {
+        Route::get('/my-services', 'getServiceComments');
+        Route::post('/{commentId}/reply', 'replyToComment');
+    });
+
+    // Thống kê
+    Route::controller(ProviderStatisticController::class)->prefix('statistics')->group(function () {
+        Route::get('/', 'getStatistics');
+    });
+});
+
+Route::controller(LocationController::class)->prefix('locations')->group(function ($router) {
+    Route::get('/', 'index');
+    Route::post('/', 'store');
+    Route::get('/{id}', 'show');
+    Route::put('/{id}', 'update');
+    Route::delete('/{id}', 'destroy');
 });

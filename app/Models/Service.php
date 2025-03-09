@@ -126,9 +126,9 @@ class Service extends Model
         return $this->hasMany(Benefit::class);
     }
 
-    public function image(): HasMany
+    public function image(): BelongsToMany
     {
-        return $this->hasMany(Image::class);
+        return $this->belongsToMany(Image::class);
     }
 
     public function price(): HasMany

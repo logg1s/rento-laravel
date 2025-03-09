@@ -15,6 +15,8 @@ use Password;
 use Storage;
 use Illuminate\Validation\Rule;
 use App\Enums\RoleEnum;
+use App\Models\Location;
+
 class UserController extends Controller
 {
     public function __construct()
@@ -92,6 +94,10 @@ class UserController extends Controller
             'name' => ['nullable', 'max:50'],
             'phone_number' => ['nullable', 'regex:/[0-9]{10,}/'],
             'address' => ['nullable', 'max: 255'],
+            'lat' => ['nullable', 'numeric'],
+            'lng' => ['nullable', 'numeric'],
+            'real_location_name' => ['nullable', 'max: 255'],
+            'province_id' => ['nullable', 'exists:provinces,id'],
             'role' => ['nullable', Rule::enum(RoleEnum::class)],
         ]);
         $user = auth()->guard()->user();
@@ -101,7 +107,47 @@ class UserController extends Controller
                 $role = Role::findOrFail($validated['role']);
                 $user->role()->sync($role);
             }
-            $user->update($validated);
+
+            // Tạo mảng dữ liệu để cập nhật
+            $userData = array_filter([
+                'name' => $validated['name'] ?? null,
+                'phone_number' => $validated['phone_number'] ?? null,
+                'address' => $validated['address'] ?? null,
+            ]);
+
+            // Lưu địa chỉ thật từ geolocation nếu có
+            if (isset($validated['real_location_name']) || isset($validated['lat']) || isset($validated['lng']) || isset($validated['province_id'])) {
+                // Tạo hoặc cập nhật location cho user
+                $locationData = [];
+
+                if (isset($validated['address'])) {
+                    $locationData['location_name'] = $validated['address'];
+                }
+
+                if (isset($validated['real_location_name'])) {
+                    $locationData['real_location_name'] = $validated['real_location_name'];
+                }
+
+                if (isset($validated['lng'])) {
+                    $locationData['lng'] = $validated['lng'];
+                }
+
+                if (isset($validated['lat'])) {
+                    $locationData['lat'] = $validated['lat'];
+                }
+
+                if (isset($validated['province_id'])) {
+                    $locationData['province_id'] = $validated['province_id'];
+                }
+
+                if (!empty($locationData)) {
+                    // Tạo location mới và liên kết với user
+                    $location = Location::create($locationData);
+                    $userData['location_id'] = $location->id;
+                }
+            }
+
+            $user->update($userData);
             return response()->json($user);
         });
     }

@@ -10,6 +10,7 @@ use App\Utils\DirtyLog;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use DB;
+use App\Events\OrderStatusUpdated;
 
 class OrderController extends Controller
 {
@@ -112,5 +113,38 @@ class OrderController extends Controller
         $order = Order::findOrFail($id);
         $message = $order->forceDelete();
         return response()->json(['message' => $message, 'deleted' => $order->load(self::RELATION_TABLES)]);
+    }
+
+    public function getProviderOrders()
+    {
+        $providerId = auth()->id();
+        return Order::with(['service', 'user'])
+            ->whereHas('service', function ($query) use ($providerId) {
+                $query->where('provider_id', $providerId);
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+    }
+
+    public function updateOrderStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:pending,processing,completed,cancelled'
+        ]);
+
+        $order = Order::findOrFail($id);
+
+        // Kiểm tra xem order có thuộc về provider này không
+        if ($order->service->provider_id !== auth()->id()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $order->status = $request->status;
+        $order->save();
+
+        // Gửi thông báo cho user
+        event(new OrderStatusUpdated($order));
+
+        return response()->json($order);
     }
 }

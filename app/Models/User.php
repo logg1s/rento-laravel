@@ -75,12 +75,24 @@ class User extends Authenticatable implements JWTSubject
 {
     use Notifiable, SoftDeletes;
 
-    protected $fillable = ['name', 'phone_number', 'password', 'email', 'address', 'image_id', 'is_oauth', 'expo_token', 'status'];
+    protected $fillable = [
+        'name',
+        'phone_number',
+        'password',
+        'email',
+        'address',
+        'image_id',
+        'is_oauth',
+        'expo_token',
+        'status',
+        'location_id'
+    ];
 
     protected $with = [
         'image',
         'role',
-        'userSetting'
+        'userSetting',
+        'location'
     ];
 
     public function order(): HasMany
@@ -136,6 +148,11 @@ class User extends Authenticatable implements JWTSubject
     public function cancelOrder(): HasMany
     {
         return $this->hasMany(Order::class, 'cancel_by');
+    }
+
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(Location::class);
     }
 
     protected $hidden = [

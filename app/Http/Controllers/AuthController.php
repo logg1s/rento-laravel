@@ -56,6 +56,9 @@ class AuthController extends Controller
             'password' => ['required', 'max:50', Password::min(8)],
             'phone_number' => ['required', 'min:4'],
             'address' => ['max: 255'],
+            'lng' => ['nullable', 'numeric'],
+            'lat' => ['nullable', 'numeric'],
+            'real_address' => ['nullable', 'max: 255'],
             'role' => [Rule::enum(RoleEnum::class)],
         ]);
 
@@ -73,6 +76,33 @@ class AuthController extends Controller
             $user->role()->attach($role);
             $user->channelNotification()->attach($role->id);
             $user->userSetting()->create(['is_notification' => true]);
+
+            // Lưu địa chỉ thật từ geolocation nếu có
+            if (isset($validated['real_address']) || isset($validated['lat']) || isset($validated['lng'])) {
+                // Tạo location cho user
+                $locationData = [];
+
+                if (isset($validated['address'])) {
+                    $locationData['location_name'] = $validated['address'];
+                }
+
+                if (isset($validated['real_address'])) {
+                    $locationData['real_location_name'] = $validated['real_address'];
+                }
+
+                if (isset($validated['lng'])) {
+                    $locationData['lng'] = $validated['lng'];
+                }
+
+                if (isset($validated['lat'])) {
+                    $locationData['lat'] = $validated['lat'];
+                }
+
+                if (!empty($locationData)) {
+                    // Lưu location mới
+                    \App\Models\Location::create($locationData);
+                }
+            }
 
             // Gửi mã xác thực sau khi đăng ký
             $this->sendVerificationCode($user->email);

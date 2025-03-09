@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * 
@@ -33,11 +34,15 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  */
 class Image extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = ['path'];
+
     public function service(): BelongsToMany
     {
         return $this->belongsToMany(Service::class);
     }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
@@ -47,6 +52,7 @@ class Image extends Model
     {
         return $this->belongsToMany(Comment::class);
     }
+
     public function user(): HasOne
     {
         return $this->hasOne(User::class);

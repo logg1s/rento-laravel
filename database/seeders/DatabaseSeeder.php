@@ -19,5 +19,10 @@ class DatabaseSeeder extends Seeder
         Role::insert([['id' => 'user'], ['id' => 'provider']]);
         Category::insert([['category_name' => 'Dọn dẹp'], ['category_name' => 'Sửa chữa']]);
         ChannelNotification::insert([['id' => 'user'], ['id' => 'provider'], ['id' => 'admin']]);
+
+        // Chạy seeder cho tỉnh thành
+        $this->call([
+            ProvinceSeeder::class,
+        ]);
     }
 }

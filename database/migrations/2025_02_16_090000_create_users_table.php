@@ -22,6 +22,7 @@ return new class extends Migration {
             $table->boolean('is_oauth')->default(false);
             $table->string("expo_token")->nullable();
             $table->tinyInteger("status")->default(UserStatusEnum::PENDING);
+            $table->foreignId('location_id')->nullable()->constrained();
             $table->softDeletes();
             $table->timestamps();
         });
