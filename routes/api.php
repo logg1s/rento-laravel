@@ -159,3 +159,13 @@ Route::controller(LocationController::class)->prefix('locations')->group(functio
     Route::put('/{id}', 'update');
     Route::delete('/{id}', 'destroy');
 });
+
+// Thêm routes mới cho benefits và prices
+Route::post('benefits/create-with-prices', [BenefitController::class, 'createWithPrices']);
+Route::put('benefits/{id}/update-with-prices', [BenefitController::class, 'updateWithPrices']);
+Route::post('benefits/bulk-update', [BenefitController::class, 'bulkUpdate']);
+
+// Routes mới cho prices
+Route::post('prices/create-with-benefits', [PriceController::class, 'createWithBenefits']);
+Route::put('prices/{id}/update-with-benefits', [PriceController::class, 'updateWithBenefits']);
+Route::post('prices/bulk-update', [PriceController::class, 'bulkUpdate']);
