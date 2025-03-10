@@ -9,6 +9,7 @@ use App\Models\Role;
 use App\Models\Service;
 use App\Models\User;
 use App\Models\ViewedServiceLog;
+use App\Utils\DirtyLog;
 use DB;
 use Illuminate\Http\Request;
 use Password;
@@ -250,6 +251,57 @@ class UserController extends Controller
         $user = auth()->guard()->user();
         $user->viewedServiceLog()->delete();
         return response()->json(['message' => 'All viewed services deleted successfully']);
+    }
+    public function deleteImage(Request $request)
+    {
+        $request->validate([
+            'imagePath' => ['required', 'string']
+        ]);
+
+        // Lấy đường dẫn hình ảnh từ request (có thể từ query param hoặc request body)
+        $imagePath = $request->input('imagePath') ?: $request->query('imagePath');
+
+        // Log request để debug
+        \Log::info('Received image delete request', [
+            'imagePath' => $imagePath,
+            'request' => $request->all(),
+            'query' => $request->query(),
+        ]);
+
+        if (empty($imagePath)) {
+            return response()->json([
+                'message' => 'Image path is required'
+            ], 400);
+        }
+
+        // Xử lý đường dẫn để trích xuất đường dẫn tương đối của hình ảnh trong storage
+        if (strpos($imagePath, '/storage/') === 0) {
+            $relativePath = substr($imagePath, 9); // Bỏ qua '/storage/'
+        } else {
+            $relativePath = $imagePath;
+        }
+        DirtyLog::log($relativePath . " " . $imagePath);
+
+        // Kiểm tra xem file có tồn tại không
+        if (Storage::disk('public')->exists($relativePath)) {
+            try {
+                // Xóa file từ storage
+                Storage::disk('public')->delete($relativePath);
+
+                return response()->json([
+                    'message' => 'Image deleted successfully'
+                ]);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'message' => 'Failed to delete image',
+                    'error' => $e->getMessage()
+                ], 500);
+            }
+        }
+
+        return response()->json([
+            'message' => 'Image not found'
+        ], 404);
     }
 }
 

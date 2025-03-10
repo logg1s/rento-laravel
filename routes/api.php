@@ -36,6 +36,7 @@ Route::middleware('throttle:api')->group(function () {
         Route::get('/{id}', 'getById');
         Route::post('/uploadAvatar', 'uploadAvatar');
         Route::post('/uploadImage', 'uploadImage');
+        Route::delete('/deleteImage', 'deleteImage');
         Route::put('/update', 'update');
         Route::put('/updatePassword', 'updatePassword');
         Route::post("/setting", "changeSetting");
@@ -173,3 +174,15 @@ Route::middleware(['throttle:api', 'auth:api'])->prefix('provider')->group(funct
         Route::post('/bulk-update', 'bulkUpdate');
     });
 });
+
+// Report routes
+Route::post('/reports', 'App\Http\Controllers\ReportController@store');
+Route::get('/reports', 'App\Http\Controllers\ReportController@index');
+Route::get('/reports/{id}', 'App\Http\Controllers\ReportController@show');
+Route::patch('/reports/{id}', 'App\Http\Controllers\ReportController@update');
+
+// User block routes
+Route::post('/user-blocks', 'App\Http\Controllers\UserBlockController@store');
+Route::get('/user-blocks', 'App\Http\Controllers\UserBlockController@index');
+Route::delete('/user-blocks/{id}', 'App\Http\Controllers\UserBlockController@destroy');
+Route::get('/user-blocks/check', 'App\Http\Controllers\UserBlockController@checkBlock');
