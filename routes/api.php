@@ -181,8 +181,3 @@ Route::get('/reports', 'App\Http\Controllers\ReportController@index');
 Route::get('/reports/{id}', 'App\Http\Controllers\ReportController@show');
 Route::patch('/reports/{id}', 'App\Http\Controllers\ReportController@update');
 
-// User block routes
-Route::post('/user-blocks', 'App\Http\Controllers\UserBlockController@store');
-Route::get('/user-blocks', 'App\Http\Controllers\UserBlockController@index');
-Route::delete('/user-blocks/{id}', 'App\Http\Controllers\UserBlockController@destroy');
-Route::get('/user-blocks/check', 'App\Http\Controllers\UserBlockController@checkBlock');

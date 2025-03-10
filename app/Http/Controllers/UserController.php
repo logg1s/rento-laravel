@@ -225,7 +225,7 @@ class UserController extends Controller
     public function uploadImage(Request $request)
     {
         $request->validate([
-            'image' => ['required', 'image', 'mimes:jpeg,png,jpg,gif', 'max:100000']
+            'image' => ['required', 'mimes:jpeg,png,jpg,gif', 'max:1000000']
         ]);
 
         return DB::transaction(function () use ($request) {
@@ -261,12 +261,6 @@ class UserController extends Controller
         // Lấy đường dẫn hình ảnh từ request (có thể từ query param hoặc request body)
         $imagePath = $request->input('imagePath') ?: $request->query('imagePath');
 
-        // Log request để debug
-        \Log::info('Received image delete request', [
-            'imagePath' => $imagePath,
-            'request' => $request->all(),
-            'query' => $request->query(),
-        ]);
 
         if (empty($imagePath)) {
             return response()->json([
@@ -280,7 +274,6 @@ class UserController extends Controller
         } else {
             $relativePath = $imagePath;
         }
-        DirtyLog::log($relativePath . " " . $imagePath);
 
         // Kiểm tra xem file có tồn tại không
         if (Storage::disk('public')->exists($relativePath)) {
