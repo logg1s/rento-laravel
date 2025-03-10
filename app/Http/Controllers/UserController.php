@@ -71,6 +71,9 @@ class UserController extends Controller
             'service' => function ($query) {
                 $query->with('comment', 'category', 'location', 'price', 'userFavorite', 'benefit', 'user');
             },
+            'location' => function ($query) {
+                $query->with('province');
+            },
         ])));
     }
 

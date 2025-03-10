@@ -115,15 +115,54 @@ class OrderController extends Controller
         return response()->json(['message' => $message, 'deleted' => $order->load(self::RELATION_TABLES)]);
     }
 
-    public function getProviderOrders()
+    public function getProviderOrders(Request $request)
     {
         $providerId = auth()->id();
-        return Order::with(['service', 'user'])
+        $status = $request->query('status', 'all');
+
+        // Log để debug
+        \Log::info('Provider orders request with status: ' . $status . ' from provider ID: ' . $providerId);
+
+        // Luôn lấy tất cả đơn hàng với thông tin đầy đủ
+        $query = Order::with(['service', 'user', 'price'])
             ->whereHas('service', function ($query) use ($providerId) {
-                $query->where('provider_id', $providerId);
-            })
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+                $query->where('user_id', $providerId);
+            });
+
+        // Chỉ lọc theo trạng thái ở backend nếu tham số status được chỉ định khác 'all'
+        if ($status !== 'all') {
+            $statusMapping = [
+                'pending' => 1,
+                'processing' => 2,
+                'completed' => 3,
+                'cancelled' => 0
+            ];
+
+            if (isset($statusMapping[$status])) {
+                $statusValue = $statusMapping[$status];
+                \Log::info('Filtering by status value: ' . $statusValue);
+                $query->where('status', $statusValue);
+            }
+        }
+
+        try {
+            // Thêm các mối quan hệ để đảm bảo dữ liệu đầy đủ
+            $orders = $query->with(['service.category', 'service.user', 'price.benefit'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            // Chuyển đổi dữ liệu thành mảng để đảm bảo định dạng nhất quán
+            $ordersArray = $orders->toArray();
+
+            // Log để debug
+            \Log::info('Provider orders count: ' . count($ordersArray));
+
+            // Đảm bảo trả về mảng JSON
+            return response()->json($ordersArray);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching provider orders: ' . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 
     public function updateOrderStatus(Request $request, $id)
@@ -134,17 +173,28 @@ class OrderController extends Controller
 
         $order = Order::findOrFail($id);
 
-        // Kiểm tra xem order có thuộc về provider này không
-        if ($order->service->provider_id !== auth()->id()) {
+        // Kiểm tra xem order có thuộc về service của provider này không
+        if ($order->service->user_id !== auth()->id()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $order->status = $request->status;
+        // Chuyển đổi status string sang giá trị số
+        $statusMapping = [
+            'cancelled' => 0,
+            'pending' => 1,
+            'processing' => 2,
+            'completed' => 3,
+        ];
+
+        $order->status = $statusMapping[$request->status];
         $order->save();
 
-        // Gửi thông báo cho user
-        event(new OrderStatusUpdated($order));
+        // Log để debug
+        \Log::info('Order status updated: Order #' . $id . ' -> ' . $request->status);
 
-        return response()->json($order);
+        // Gửi thông báo cho user nếu cần
+        // event(new OrderStatusUpdated($order));
+
+        return response()->json($order->load(['service', 'user', 'price']));
     }
 }

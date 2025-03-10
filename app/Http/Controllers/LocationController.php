@@ -17,7 +17,7 @@ class LocationController extends Controller
      */
     public function index(): JsonResponse
     {
-        $locations = Location::with('province')->get();
+        $locations = Location::all();
 
         return response()->json([
             'status' => 'success',

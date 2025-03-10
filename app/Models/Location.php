@@ -39,6 +39,7 @@ use Illuminate\Database\Eloquent\Model;
 class Location extends Model
 {
     public $fillable = ['location_name', 'lng', 'lat', 'real_location_name', 'province_id', 'address'];
+    public $with = ['province'];
 
     public function service(): HasMany
     {

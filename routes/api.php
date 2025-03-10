@@ -61,7 +61,6 @@ Route::middleware('throttle:api')->group(function () {
         Route::get('/', 'index');
         Route::get('/search', 'search');
         Route::get('/{id}', 'show');
-        Route::post('/find-by-coordinates', 'findByCoordinates');
     });
 
     Route::controller(NotificationController::class)->prefix('notifications')->group(function ($router) {
@@ -89,12 +88,10 @@ Route::middleware('throttle:api')->group(function () {
         Route::get('/', 'getAll');
         Route::get('/{id}', 'getById');
         Route::get('/service/{serviceId}', 'getByServiceId');
-        Route::get('/independent/{serviceId}', 'getIndependent');
         Route::post('/', 'create');
         Route::put('/{id}', 'update');
+        Route::get('/independent/{serviceId}', 'getIndependent');
         Route::delete('/{id}', 'delete');
-        Route::post('/{id}/detach-price', 'detachPrice');
-        Route::post('/attach-to-price/{priceId}', 'attachToPrice');
     });
 
     Route::controller(FavoriteController::class)->prefix('favorites')->group(function () {
@@ -150,22 +147,29 @@ Route::middleware(['throttle:api', 'auth:api'])->prefix('provider')->group(funct
     Route::controller(ProviderStatisticController::class)->prefix('statistics')->group(function () {
         Route::get('/', 'getStatistics');
     });
+
+    // Quản lý location
+    Route::controller(LocationController::class)->prefix('locations')->group(function ($router) {
+        Route::get('/', 'index');
+        Route::post('/', 'store');
+        Route::get('/{id}', 'show');
+        Route::put('/{id}', 'update');
+        Route::delete('/{id}', 'destroy');
+    });
+
+    // Route cho benefits
+    Route::controller(BenefitController::class)->prefix('benefits')->group(function () {
+        Route::post('/create-with-prices', 'createWithPrices');
+        Route::put('/{id}/update-with-prices', 'updateWithPrices');
+        Route::post('/bulk-update', 'bulkUpdate');
+        Route::get('/independent/{serviceId}', 'getIndependent');
+        Route::delete('/{id}', 'delete');
+    });
+
+    // Route cho prices
+    Route::controller(PriceController::class)->prefix('prices')->group(function () {
+        Route::post('/create-with-benefits', 'createWithBenefits');
+        Route::put('/{id}/update-with-benefits', 'updateWithBenefits');
+        Route::post('/bulk-update', 'bulkUpdate');
+    });
 });
-
-Route::controller(LocationController::class)->prefix('locations')->group(function ($router) {
-    Route::get('/', 'index');
-    Route::post('/', 'store');
-    Route::get('/{id}', 'show');
-    Route::put('/{id}', 'update');
-    Route::delete('/{id}', 'destroy');
-});
-
-// Thêm routes mới cho benefits và prices
-Route::post('benefits/create-with-prices', [BenefitController::class, 'createWithPrices']);
-Route::put('benefits/{id}/update-with-prices', [BenefitController::class, 'updateWithPrices']);
-Route::post('benefits/bulk-update', [BenefitController::class, 'bulkUpdate']);
-
-// Routes mới cho prices
-Route::post('prices/create-with-benefits', [PriceController::class, 'createWithBenefits']);
-Route::put('prices/{id}/update-with-benefits', [PriceController::class, 'updateWithBenefits']);
-Route::post('prices/bulk-update', [PriceController::class, 'bulkUpdate']);
