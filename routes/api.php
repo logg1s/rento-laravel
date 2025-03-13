@@ -108,6 +108,9 @@ Route::middleware('throttle:api')->group(function () {
         Route::delete('/{id}', 'delete');
     });
 
+    // Add route to get comments by service ID
+    Route::get('/services/{id}/comments', [CommentController::class, 'getCommentsByServiceId']);
+
     Route::controller(OrderController::class)->prefix('orders')->group(function () {
         Route::get('/', 'getAll');
         Route::get('/{id}', 'getById');

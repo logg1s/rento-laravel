@@ -28,6 +28,19 @@ class CommentController extends Controller
         return response()->json(Comment::findOrFail($id)->load(self::RELATION_TABLES));
     }
 
+    /**
+     * Get all comments for a specific service
+     */
+    public function getCommentsByServiceId(string $id)
+    {
+        $comments = Comment::where('service_id', $id)
+            ->with(['user'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json($comments);
+    }
+
     public function create(Request $request, string $serviceId)
     {
         $user = auth()->user();

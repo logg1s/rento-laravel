@@ -43,7 +43,8 @@ class NotificationController extends Controller
     public function getAll(Request $request)
     {
         $size = $request->query('size', 50);
-        $category = Notification::with(self::RELATION_TABLES)->orderBy('id', 'desc')->cursorPaginate($size);
+        $user = auth()->guard()->user();
+        $category = Notification::where('user_id', $user->id)->with(self::RELATION_TABLES)->orderBy('id', 'desc')->cursorPaginate($size);
         return response()->json($category);
     }
 

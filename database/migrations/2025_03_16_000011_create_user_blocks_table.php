@@ -14,9 +14,14 @@ return new class extends Migration {
     {
         Schema::create('user_blocks', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('blocked_user_id')->constrained('users')->onDelete('cascade');
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('blocked_user_id');
+            $table->text('reason')->nullable();
             $table->timestamps();
+
+            // Thêm foreign key constraints
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('blocked_user_id')->references('id')->on('users')->onDelete('cascade');
 
             // Đảm bảo mỗi user chỉ có thể chặn một user khác một lần
             $table->unique(['user_id', 'blocked_user_id']);

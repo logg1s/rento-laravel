@@ -7,15 +7,13 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
-    public function up()
+    public function up(): void
     {
         Schema::create('reports', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('reporter_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('reported_user_id')->constrained('users')->onDelete('cascade');
+            $table->unsignedBigInteger('reporter_id');
+            $table->unsignedBigInteger('reported_user_id');
             $table->string('entity_type'); // 'message', 'user', 'service', etc.
             $table->string('entity_id');   // ID của entity được báo cáo
             $table->text('reason');        // Lý do báo cáo
@@ -26,15 +24,17 @@ return new class extends Migration {
             // Index để tìm kiếm nhanh
             $table->index(['entity_type', 'entity_id']);
             $table->index('status');
+
+            // Thêm foreign key constraints sau khi tạo bảng
+            $table->foreign('reporter_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('reported_user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('reports');
     }

@@ -78,8 +78,12 @@ class ProvinceSeeder extends Seeder
             ['name' => 'Yên Bái', 'code' => 'YB'],
         ];
 
+        // Tạo chỉ các tỉnh chưa tồn tại
         foreach ($provinces as $provinceData) {
-            Province::create($provinceData);
+            Province::updateOrCreate(
+                ['code' => $provinceData['code']],
+                $provinceData
+            );
         }
     }
 }
