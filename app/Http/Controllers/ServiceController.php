@@ -7,6 +7,7 @@ use App\Models\Image;
 use App\Models\Location;
 use App\Models\Service;
 use App\Models\ViewedServiceLog;
+use App\Utils\DirtyLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
@@ -44,22 +45,10 @@ class ServiceController extends Controller
 
     public function getAll(Request $request)
     {
-        $size = $request->query('size', self::DEFAULT_SIZE);
-        $cursor = $request->query('cursor', null);
-        $key = $this->getKeyAll($size, $cursor);
 
-        $services = Redis::get($key);
-        if ($services) {
-            $services = json_decode($services, true);
-        } else {
-            $services = Service::with(array_merge(self::RELATION_TABLES, ['image']))
-                ->orderBy('id', 'desc')
-                ->cursorPaginate($size, ['*'], 'cursor', $cursor);
-            Redis::set($key, json_encode($services));
-            Redis::expire($key, self::CACHE_TTL);
-            Redis::sadd('service:all:keys', $key);
-            Redis::expire('service:all:keys', self::CACHE_TTL);
-        }
+        $services = Service::with(array_merge(self::RELATION_TABLES, ['image']))
+            ->orderBy('id', 'desc')
+            ->cursorPaginate(15);
 
         return response()->json($services, 200, [], JSON_UNESCAPED_UNICODE);
     }
@@ -67,10 +56,25 @@ class ServiceController extends Controller
     public function getMyServices(Request $request)
     {
         $user = auth()->guard()->user();
-        $services = Service::with(array_merge(self::RELATION_TABLES, ['image']))
-            ->where('user_id', $user->id)
-            ->orderBy('id', 'desc')
-            ->get();
+        $query = Service::with(array_merge(self::RELATION_TABLES, ['image']))
+            ->where('user_id', $user->id);
+
+        // Apply category filter
+        if ($request->has('category_id') && $request->category_id !== 'all') {
+            $query->where('category_id', $request->category_id);
+        }
+
+        // Apply search query
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('service_name', 'like', "%{$search}%")
+                    ->orWhere('service_description', 'like', "%{$search}%");
+            });
+        }
+
+        $services = $query->orderBy('id', 'desc')
+            ->cursorPaginate($request->query('per_page', 5));
 
         return response()->json($services, 200, [], JSON_UNESCAPED_UNICODE);
     }
@@ -485,5 +489,102 @@ class ServiceController extends Controller
 
             return response()->json(['message' => 'success']);
         });
+    }
+
+    /**
+     * Get counts of services by category
+     */
+    public function getCategoryCounts(Request $request)
+    {
+        $user = auth()->guard()->user();
+
+        // Create a query to get services owned by the current user
+        $query = Service::where('user_id', $user->id);
+
+        // Get counts by category
+        $counts = $query->select('category_id', DB::raw('count(*) as count'))
+            ->groupBy('category_id')
+            ->get()
+            ->pluck('count', 'category_id')
+            ->toArray();
+
+        return response()->json($counts);
+    }
+
+    /**
+     * Lấy danh sách dịch vụ gần vị trí hiện tại của người dùng
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getNearbyServices(Request $request)
+    {
+        $user = auth()->guard()->user();
+        $radius = $request->input('radius', 10); // Bán kính tìm kiếm mặc định 10km
+        $lat = $request->input('lat'); // Vĩ độ của người dùng
+        $lng = $request->input('lng'); // Kinh độ của người dùng
+        $provinceId = $request->input('province_id'); // ID tỉnh/thành phố của người dùng
+        $perPage = $request->input('per_page', 15);
+
+        if (!$lat || !$lng) {
+            // Nếu không có tọa độ, tìm theo tỉnh/thành
+            if (!$provinceId) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Vui lòng cung cấp vị trí hoặc tỉnh/thành của bạn'
+                ], 400);
+            }
+
+            $query = Service::with(array_merge(self::RELATION_TABLES, ['image']))
+                ->whereHas('location', function ($query) use ($provinceId) {
+                    $query->where('province_id', $provinceId);
+                })
+                ->orderBy('id', 'desc');
+
+            $services = $query->paginate($perPage);
+
+            // Thêm thông tin is_liked cho mỗi dịch vụ
+            $services->getCollection()->transform(function ($service) use ($user) {
+                $service->is_liked = $service->userFavorite->contains('id', $user->id);
+                return $service;
+            });
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $services
+            ]);
+        }
+
+        $haversineSQL = "
+            (
+                6371 * 2 * ASIN(
+                    SQRT(
+                        POWER(SIN((RADIANS(locations.lat) - RADIANS(?)) / 2), 2) +
+                        COS(RADIANS(?)) * COS(RADIANS(locations.lat)) * POWER(SIN((RADIANS(locations.lng) - RADIANS(?)) / 2), 2)
+                    )
+                )
+            )";
+
+        $query = Service::with(array_merge(self::RELATION_TABLES, ['image']))
+            ->join('locations', 'services.location_id', '=', 'locations.id')
+            ->select('services.*')
+            ->selectRaw("$haversineSQL AS distance", [$lat, $lat, $lng])
+            ->whereRaw("$haversineSQL < ?", [$lat, $lat, $lng, $radius])
+            ->whereNotNull('locations.lat')
+            ->whereNotNull('locations.lng')
+            ->orderBy('distance', 'asc');
+
+        $services = $query->paginate($perPage);
+
+        // Thêm thông tin is_liked cho mỗi dịch vụ
+        $services->getCollection()->transform(function ($service) use ($user) {
+            $service->is_liked = $service->userFavorite->contains('id', $user->id);
+            return $service;
+        });
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $services
+        ]);
     }
 }

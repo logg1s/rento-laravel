@@ -32,9 +32,6 @@ class UserController extends Controller
     public function me()
     {
         return response()->json(auth()->guard()->user()->load(array_merge(self::LOAD_RELATION, [
-            'service' => function ($query) {
-                $query->with('comment', 'category', 'location', 'price', 'userFavorite', 'benefit', 'user');
-            },
             'viewedServiceLog' => function ($query) {
                 $query->orderBy('id', 'desc');
             },
@@ -112,16 +109,16 @@ class UserController extends Controller
                 $user->role()->sync($role);
             }
 
-            // Tạo mảng dữ liệu để cập nhật
+
             $userData = array_filter([
                 'name' => $validated['name'] ?? null,
                 'phone_number' => $validated['phone_number'] ?? null,
                 'address' => $validated['address'] ?? null,
             ]);
 
-            // Lưu địa chỉ thật từ geolocation nếu có
+
             if (isset($validated['real_location_name']) || isset($validated['lat']) || isset($validated['lng']) || isset($validated['province_id'])) {
-                // Tạo hoặc cập nhật location cho user
+
                 $locationData = [];
 
                 if (isset($validated['address'])) {
@@ -145,7 +142,7 @@ class UserController extends Controller
                 }
 
                 if (!empty($locationData)) {
-                    // Tạo location mới và liên kết với user
+
                     $location = Location::create($locationData);
                     $userData['location_id'] = $location->id;
                 }
@@ -177,11 +174,11 @@ class UserController extends Controller
                 ], 400);
             }
 
-            // Update password mới
+
             $user->password = bcrypt($validated['new_password']);
             $user->save();
 
-            // Refresh token
+
             return response()->json($user);
         });
     }
@@ -209,7 +206,7 @@ class UserController extends Controller
                 }
             }
 
-            // Save new image
+
             $filename = $request->file('avatar')->hashName();
             $path = $request->file('avatar')->storeAs('avatars', $filename, "public");
             $image = Image::create(['path' => Storage::url($path)]);
@@ -258,7 +255,7 @@ class UserController extends Controller
             'imagePath' => ['required', 'string']
         ]);
 
-        // Lấy đường dẫn hình ảnh từ request (có thể từ query param hoặc request body)
+
         $imagePath = $request->input('imagePath') ?: $request->query('imagePath');
 
 
@@ -268,17 +265,17 @@ class UserController extends Controller
             ], 400);
         }
 
-        // Xử lý đường dẫn để trích xuất đường dẫn tương đối của hình ảnh trong storage
+
         if (strpos($imagePath, '/storage/') === 0) {
-            $relativePath = substr($imagePath, 9); // Bỏ qua '/storage/'
+            $relativePath = substr($imagePath, 9);
         } else {
             $relativePath = $imagePath;
         }
 
-        // Kiểm tra xem file có tồn tại không
+
         if (Storage::disk('public')->exists($relativePath)) {
             try {
-                // Xóa file từ storage
+
                 Storage::disk('public')->delete($relativePath);
 
                 return response()->json([

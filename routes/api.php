@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BenefitController;
+use App\Http\Controllers\ChatbotController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\NotificationController;
@@ -46,6 +47,7 @@ Route::middleware('throttle:api')->group(function () {
 
     Route::controller(ServiceController::class)->prefix('services')->group(function ($router) {
         Route::get('/', 'getAll');
+        Route::get('/nearby', 'getNearbyServices');
         Route::get('/{id}', 'getById');
         Route::post('/', 'create');
         Route::put('/{id}', 'update');
@@ -118,12 +120,17 @@ Route::middleware('throttle:api')->group(function () {
         Route::put('/{id}', 'update');
         Route::delete('/{id}', 'delete');
     });
+
+    Route::controller(ChatbotController::class)->prefix('chatbot')->group(function () {
+        Route::post('/run', 'run');
+    });
 });
 
 Route::middleware(['throttle:api', 'auth:api'])->prefix('provider')->group(function () {
     // Quản lý dịch vụ
     Route::controller(ServiceController::class)->prefix('services')->group(function () {
         Route::get('/my-services', 'getMyServices');
+        Route::get('/category-counts', 'getCategoryCounts');
         Route::get('/{id}', 'getProviderServiceById');
         Route::post('/', 'create');
         Route::put('/{id}', 'update');
@@ -176,6 +183,9 @@ Route::middleware(['throttle:api', 'auth:api'])->prefix('provider')->group(funct
         Route::put('/{id}/update-with-benefits', 'updateWithBenefits');
         Route::post('/bulk-update', 'bulkUpdate');
     });
+
+
+
 });
 
 // Report routes

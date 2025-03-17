@@ -119,17 +119,27 @@ class OrderController extends Controller
     {
         $providerId = auth()->id();
         $status = $request->query('status', 'all');
+        $limit = $request->query('limit', 10);
+        $searchQuery = $request->query('search', '');
+        $searchFilter = $request->query('searchFilter', 'service');
+        $sortBy = $request->query('sortBy', 'newest');
+        $startDate = $request->query('startDate');
+        $endDate = $request->query('endDate');
 
-        // Log để debug
-        \Log::info('Provider orders request with status: ' . $status . ' from provider ID: ' . $providerId);
+        \Log::info('Provider orders request:', [
+            'status' => $status,
+            'sortBy' => $sortBy,
+            'startDate' => $startDate,
+            'endDate' => $endDate
+        ]);
 
-        // Luôn lấy tất cả đơn hàng với thông tin đầy đủ
+        // Truy vấn cơ bản
         $query = Order::with(['service', 'user', 'price'])
             ->whereHas('service', function ($query) use ($providerId) {
                 $query->where('user_id', $providerId);
             });
 
-        // Chỉ lọc theo trạng thái ở backend nếu tham số status được chỉ định khác 'all'
+        // Lọc theo trạng thái nếu có
         if ($status !== 'all') {
             $statusMapping = [
                 'pending' => 1,
@@ -140,25 +150,127 @@ class OrderController extends Controller
 
             if (isset($statusMapping[$status])) {
                 $statusValue = $statusMapping[$status];
-                \Log::info('Filtering by status value: ' . $statusValue);
                 $query->where('status', $statusValue);
             }
         }
 
+        // Thêm tìm kiếm dựa trên searchFilter
+        if ($searchQuery) {
+            switch ($searchFilter) {
+                case 'service':
+                    $query->whereHas('service', function ($q) use ($searchQuery) {
+                        $q->where('service_name', 'LIKE', "%{$searchQuery}%");
+                    });
+                    break;
+                case 'customer':
+                    $query->whereHas('user', function ($q) use ($searchQuery) {
+                        $q->where('name', 'LIKE', "%{$searchQuery}%");
+                    });
+                    break;
+                case 'order_id':
+                    $query->where('id', 'LIKE', "%{$searchQuery}%");
+                    break;
+                case 'phone':
+                    $query->where('phone_number', 'LIKE', "%{$searchQuery}%");
+                    break;
+                case 'address':
+                    $query->where('address', 'LIKE', "%{$searchQuery}%");
+                    break;
+                case 'email':
+                    $query->whereHas('user', function ($q) use ($searchQuery) {
+                        $q->where('email', 'LIKE', "%{$searchQuery}%");
+                    });
+                    break;
+                case 'all':
+                    $query->where(function ($q) use ($searchQuery) {
+                        $q->whereHas('service', function ($sq) use ($searchQuery) {
+                            $sq->where('service_name', 'LIKE', "%{$searchQuery}%");
+                        })
+                            ->orWhereHas('user', function ($sq) use ($searchQuery) {
+                                $sq->where('name', 'LIKE', "%{$searchQuery}%")
+                                    ->orWhere('email', 'LIKE', "%{$searchQuery}%");
+                            })
+                            ->orWhere('id', 'LIKE', "%{$searchQuery}%")
+                            ->orWhere('phone_number', 'LIKE', "%{$searchQuery}%")
+                            ->orWhere('address', 'LIKE', "%{$searchQuery}%");
+                    });
+                    break;
+            }
+        }
+
+        // Lọc theo khoảng thời gian
+        if ($startDate) {
+            $query->whereDate('created_at', '>=', $startDate);
+        }
+        if ($endDate) {
+            $query->whereDate('created_at', '<=', $endDate);
+        }
+
+        // Sắp xếp
+        switch ($sortBy) {
+            case 'oldest':
+                $query->orderBy('created_at', 'asc');
+                break;
+            case 'price_high':
+                $query->orderBy('price_final_value', 'desc');
+                break;
+            case 'price_low':
+                $query->orderBy('price_final_value', 'asc');
+                break;
+            case 'newest':
+            default:
+                $query->orderBy('created_at', 'desc');
+                break;
+        }
+
+        // Lấy tổng số đơn hàng cho từng trạng thái (không bị ảnh hưởng bởi phân trang)
+        $baseCountQuery = (clone $query);
+        if ($searchQuery || $startDate || $endDate) {
+            $totalCounts = [
+                'total' => (clone $baseCountQuery)->count(),
+                'pending' => (clone $baseCountQuery)->where('status', 1)->count(),
+                'processing' => (clone $baseCountQuery)->where('status', 2)->count(),
+                'completed' => (clone $baseCountQuery)->where('status', 3)->count(),
+                'cancelled' => (clone $baseCountQuery)->where('status', 0)->count(),
+            ];
+        } else {
+            // If no filters, use simpler counting query
+            $totalCounts = [
+                'total' => Order::whereHas('service', function ($q) use ($providerId) {
+                    $q->where('user_id', $providerId);
+                })->count(),
+                'pending' => Order::whereHas('service', function ($q) use ($providerId) {
+                    $q->where('user_id', $providerId);
+                })->where('status', 1)->count(),
+                'processing' => Order::whereHas('service', function ($q) use ($providerId) {
+                    $q->where('user_id', $providerId);
+                })->where('status', 2)->count(),
+                'completed' => Order::whereHas('service', function ($q) use ($providerId) {
+                    $q->where('user_id', $providerId);
+                })->where('status', 3)->count(),
+                'cancelled' => Order::whereHas('service', function ($q) use ($providerId) {
+                    $q->where('user_id', $providerId);
+                })->where('status', 0)->count(),
+            ];
+        }
+
         try {
-            // Thêm các mối quan hệ để đảm bảo dữ liệu đầy đủ
-            $orders = $query->with(['service.category', 'service.user', 'price.benefit'])
-                ->orderBy('created_at', 'desc')
-                ->get();
+            // Sử dụng phân trang cursor tích hợp của Laravel
+            $orders = $query->cursorPaginate($limit);
 
-            // Chuyển đổi dữ liệu thành mảng để đảm bảo định dạng nhất quán
-            $ordersArray = $orders->toArray();
+            // Thêm quan hệ cần thiết
+            $orders->through(function ($order) {
+                $order->load(['service.category', 'service.user', 'price.benefit']);
+                return $order;
+            });
 
-            // Log để debug
-            \Log::info('Provider orders count: ' . count($ordersArray));
-
-            // Đảm bảo trả về mảng JSON
-            return response()->json($ordersArray);
+            // Trả về kết quả phân trang với con trỏ tiếp theo và tổng số đơn hàng
+            return response()->json([
+                'data' => $orders->items(),
+                'next_cursor' => $orders->nextCursor() ? $orders->nextCursor()->encode() : null,
+                'has_more' => $orders->hasMorePages(),
+                'counts' => $totalCounts
+            ]);
         } catch (\Exception $e) {
             \Log::error('Error fetching provider orders: ' . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
