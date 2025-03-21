@@ -48,11 +48,12 @@ Route::group([], function () {
     Route::controller(ServiceController::class)->prefix('services')->group(function ($router) {
         Route::get('/', 'getAll');
         Route::get('/nearby', 'getNearbyServices');
-        Route::get('/{id}', 'getById');
+        Route::get('/viewed', 'getViewedService');
+        Route::get('/get/{id}', 'getById');
+        Route::get('/restore/{id}', 'restore');
         Route::post('/', 'create');
         Route::put('/{id}', 'update');
         Route::delete('/{id}/{force?}', 'delete');
-        Route::get('/restore/{id}', 'restore');
     });
 
     Route::controller(\App\Http\Controllers\CategoryController::class)->prefix('categories')->group(function ($router) {

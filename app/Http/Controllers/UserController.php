@@ -53,10 +53,10 @@ class UserController extends Controller
         $user = auth()->guard()->user();
         $orders = $user->order()->with([
             'service' => function ($query) {
-                $query->with('comment', 'category', 'location', 'price', 'userFavorite', 'benefit', 'user');
+                $query->with('user');
             },
             'cancelBy',
-        ])->get();
+        ])->orderBy('created_at', 'desc')->cursorPaginate(perPage: 5);
         return Response::json($orders);
     }
 

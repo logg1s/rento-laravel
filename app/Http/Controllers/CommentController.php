@@ -21,7 +21,7 @@ class CommentController extends Controller
 
     public function getAll(): JsonResponse
     {
-        return Response::json(Comment::with(self::RELATION_TABLES)->orderBy('id', 'desc')->get());
+        return Response::json(Comment::with(self::RELATION_TABLES)->orderBy('created_at', 'desc')->cursorPaginate(10));
     }
 
     public function getById(string $id): JsonResponse
@@ -37,7 +37,7 @@ class CommentController extends Controller
         $comments = Comment::where('service_id', $id)
             ->with(['user'])
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->cursorPaginate(perPage: 5);
 
         return Response::json($comments);
     }

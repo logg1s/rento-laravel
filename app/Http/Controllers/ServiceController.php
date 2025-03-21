@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\StatusEnum;
 use App\Models\Category;
 use App\Models\Image;
 use App\Models\Location;
@@ -19,7 +20,7 @@ class ServiceController extends Controller
     const DEFAULT_SIZE = 5;
     const CACHE_TTL = 30;
     const RELATION_TABLES = ['user', 'category', 'location', 'price'];
-    const RELATION_TABLE_DETAILS = ['userFavorite', 'benefit', 'comment' => ['user']];
+    const RELATION_TABLE_DETAILS = ['userFavorite', 'benefit'];
     public function __construct()
     {
         $this->middleware('auth:api');
@@ -46,7 +47,7 @@ class ServiceController extends Controller
 
     public function getAll(Request $request): JsonResponse
     {
-
+        $user = auth()->guard()->user();
         $services = Service::with(array_merge(self::RELATION_TABLES, ['image']))
             ->orderBy('id', 'desc')
             ->cursorPaginate(5);
@@ -90,6 +91,9 @@ class ServiceController extends Controller
             'updated_at' => now()
         ]);
 
+        $service->view_count = ViewedServiceLog::where('service_id', $service->id)->count();
+        $service->order_count = $service->order()->count();
+        $service->ordered_by_me = $service->order()->where('user_id', auth()->guard()->user()->id)->where('status', StatusEnum::SUCCESS->value)->exists();
         $suggestedServices = Service::where('id', '!=', $service->id)
             ->where(function ($query) use ($service) {
                 $query->where('category_id', $service->category_id)
@@ -589,4 +593,17 @@ class ServiceController extends Controller
             'data' => $services
         ]);
     }
+
+    public function getViewedService(Request $request): JsonResponse
+    {
+        $user = auth()->guard()->user();
+        $viewedServices = Service::with(array_merge(self::RELATION_TABLES, ['image']))
+            ->whereHas('viewedServiceLog', function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
+            ->orderBy('id', 'desc')
+            ->cursorPaginate(perPage: 5);
+        return Response::json($viewedServices);
+    }
+
 }
