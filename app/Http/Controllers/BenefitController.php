@@ -7,7 +7,8 @@ use App\Models\Price;
 use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Response;
 class BenefitController extends Controller
 {
     private const RELATION_TABLES = ['price'];
@@ -19,17 +20,17 @@ class BenefitController extends Controller
 
     public function getAll()
     {
-        return response()->json(Benefit::orderBy('created_at', 'desc')->get()->load(self::RELATION_TABLES));
+        return Response::json(Benefit::orderBy('created_at', 'desc')->get()->load(self::RELATION_TABLES));
     }
 
     public function getById(Request $request, string $id)
     {
-        return response()->json(Benefit::findOrFail($id)->load(self::RELATION_TABLES));
+        return Response::json(Benefit::findOrFail($id)->load(self::RELATION_TABLES));
     }
 
     public function getByServiceId(Request $request, string $serviceId)
     {
-        return response()->json(
+        return Response::json(
             Service::findOrFail($serviceId)
                 ->benefit()
                 ->orderBy('created_at', 'desc')
@@ -38,7 +39,7 @@ class BenefitController extends Controller
         );
     }
 
-    public function create(Request $request)
+    public function create(Request $request): JsonResponse
     {
         $validate = $request->validate([
             'benefit_name' => ['required', 'max:50'],
@@ -65,7 +66,7 @@ class BenefitController extends Controller
                 }
             }
 
-            return response()->json($benefit->load(self::RELATION_TABLES));
+            return Response::json($benefit->load(self::RELATION_TABLES));
         });
     }
 
@@ -89,7 +90,7 @@ class BenefitController extends Controller
                 $benefit->price()->syncWithoutDetaching(Price::findOrFail($validate['price_id']));
             }
 
-            return response()->json($benefit->load(self::RELATION_TABLES));
+            return Response::json($benefit->load(self::RELATION_TABLES));
         });
     }
 
@@ -106,7 +107,7 @@ class BenefitController extends Controller
 
         return DB::transaction(function () use ($benefit, $validate) {
             $benefit->price()->detach($validate['price_id']);
-            return response()->json(['message' => 'Đã xóa liên kết thành công']);
+            return Response::json(['message' => 'Đã xóa liên kết thành công']);
         });
     }
 
@@ -127,7 +128,7 @@ class BenefitController extends Controller
                 $benefit = Benefit::findOrFail($benefitId);
                 $benefit->price()->syncWithoutDetaching($price);
             }
-            return response()->json(['message' => 'Đã liên kết lợi ích thành công']);
+            return Response::json(['message' => 'Đã liên kết lợi ích thành công']);
         });
     }
 
@@ -146,7 +147,7 @@ class BenefitController extends Controller
             return $benefit->price->isEmpty();
         });
 
-        return response()->json($independentBenefits->values());
+        return Response::json($independentBenefits->values());
     }
 
     public function delete(Request $request, string $id)
@@ -156,7 +157,7 @@ class BenefitController extends Controller
             // Xóa tất cả các liên kết với price trước
             $benefit->price()->detach();
             $benefit->forceDelete();
-            return response()->json(['message' => 'success']);
+            return Response::json(['message' => 'success']);
         });
     }
 
@@ -164,7 +165,7 @@ class BenefitController extends Controller
      * Thêm benefit và liên kết với nhiều prices trong một lần gọi
      * Cải thiện hiệu suất khi có nhiều prices cần liên kết
      */
-    public function createWithPrices(Request $request)
+    public function createWithPrices(Request $request): JsonResponse
     {
         $validate = $request->validate([
             'benefit_name' => ['required', 'max:50'],
@@ -184,7 +185,7 @@ class BenefitController extends Controller
                 $benefit->price()->syncWithoutDetaching($validate['price_ids']);
             }
 
-            return response()->json($benefit->load(self::RELATION_TABLES));
+            return Response::json($benefit->load(self::RELATION_TABLES));
         });
     }
 
@@ -214,14 +215,14 @@ class BenefitController extends Controller
                 $benefit->price()->detach();
             }
 
-            return response()->json($benefit->load(self::RELATION_TABLES));
+            return Response::json($benefit->load(self::RELATION_TABLES));
         });
     }
 
     /**
      * Cập nhật nhiều benefit cùng lúc
      */
-    public function bulkUpdate(Request $request)
+    public function bulkUpdate(Request $request): JsonResponse
     {
         $validate = $request->validate([
             'benefits' => ['required', 'array'],
@@ -245,7 +246,7 @@ class BenefitController extends Controller
                 $updated[] = $benefit->load(self::RELATION_TABLES);
             }
 
-            return response()->json($updated);
+            return Response::json($updated);
         });
     }
 }

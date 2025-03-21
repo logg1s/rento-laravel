@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Location;
 use App\Models\Province;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -19,7 +20,7 @@ class LocationController extends Controller
     {
         $locations = Location::all();
 
-        return response()->json([
+        return Response::json([
             'status' => 'success',
             'data' => $locations
         ]);
@@ -42,7 +43,7 @@ class LocationController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
+            return Response::json([
                 'status' => 'error',
                 'message' => 'Dữ liệu không hợp lệ',
                 'errors' => $validator->errors()
@@ -57,7 +58,7 @@ class LocationController extends Controller
             'lng' => $request->lng,
         ]);
 
-        return response()->json([
+        return Response::json([
             'status' => 'success',
             'message' => 'Đã tạo địa điểm thành công',
             'data' => $location->load('province')
@@ -74,7 +75,7 @@ class LocationController extends Controller
     {
         $location = Location::with('province')->findOrFail($id);
 
-        return response()->json([
+        return Response::json([
             'status' => 'success',
             'data' => $location
         ]);
@@ -100,7 +101,7 @@ class LocationController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
+            return Response::json([
                 'status' => 'error',
                 'message' => 'Dữ liệu không hợp lệ',
                 'errors' => $validator->errors()
@@ -115,7 +116,7 @@ class LocationController extends Controller
             'lng',
         ]));
 
-        return response()->json([
+        return Response::json([
             'status' => 'success',
             'message' => 'Đã cập nhật địa điểm thành công',
             'data' => $location->fresh()->load('province')
@@ -133,7 +134,7 @@ class LocationController extends Controller
         $location = Location::findOrFail($id);
         $location->delete();
 
-        return response()->json([
+        return Response::json([
             'status' => 'success',
             'message' => 'Đã xóa địa điểm thành công'
         ]);

@@ -7,6 +7,7 @@ use App\Models\Service;
 use App\Models\Comment;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -25,7 +26,7 @@ class ProviderStatisticController extends Controller
         $period = $request->query('period', 'week'); // week, month, year
 
         try {
-            return response()->json([
+            return Response::json([
                 'revenue' => $this->getRevenueStatistics($providerId, $period),
                 'orders' => $this->getOrderStatistics($providerId, $period),
                 'services' => $this->getServiceEffectiveness($providerId, $period),
@@ -33,7 +34,7 @@ class ProviderStatisticController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Error in provider statistics: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to retrieve statistics: ' . $e->getMessage()], 500);
+            return Response::json(['error' => 'Failed to retrieve statistics: ' . $e->getMessage()], 500);
         }
     }
 

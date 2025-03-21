@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Report;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Response;
 class ReportController extends Controller
 {
     /**
@@ -13,7 +14,7 @@ class ReportController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $query = Report::with(['reporter', 'reportedUser']);
 
@@ -34,7 +35,7 @@ class ReportController extends Controller
 
         $reports = $query->orderBy('created_at', 'desc')->paginate(15);
 
-        return response()->json($reports);
+        return Response::json($reports);
     }
 
     /**
@@ -43,7 +44,7 @@ class ReportController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'reporter_id' => 'required|exists:users,id',
@@ -54,7 +55,7 @@ class ReportController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 400);
+            return Response::json(['errors' => $validator->errors()], 400);
         }
 
         $report = Report::create([
@@ -66,7 +67,7 @@ class ReportController extends Controller
             'status' => 'pending',
         ]);
 
-        return response()->json(['message' => 'Report submitted successfully', 'data' => $report], 201);
+        return Response::json(['message' => 'Report submitted successfully', 'data' => $report], 201);
     }
 
     /**
@@ -78,7 +79,7 @@ class ReportController extends Controller
     public function show($id)
     {
         $report = Report::with(['reporter', 'reportedUser'])->findOrFail($id);
-        return response()->json($report);
+        return Response::json($report);
     }
 
     /**
@@ -96,7 +97,7 @@ class ReportController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 400);
+            return Response::json(['errors' => $validator->errors()], 400);
         }
 
         $report = Report::findOrFail($id);
@@ -105,6 +106,6 @@ class ReportController extends Controller
             'admin_notes' => $request->admin_notes,
         ]);
 
-        return response()->json(['message' => 'Report updated successfully', 'data' => $report]);
+        return Response::json(['message' => 'Report updated successfully', 'data' => $report]);
     }
 }

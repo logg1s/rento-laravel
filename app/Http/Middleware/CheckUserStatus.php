@@ -20,13 +20,13 @@ class CheckUserStatus
 
         if ($user) {
             if ($user->status === UserStatusEnum::BLOCKED->value) {
-                return response()->json([
+                return Response::json([
                     'message' => 'Tài khoản của bạn đã bị khóa'
                 ], 403);
             }
 
             if ($user->status === UserStatusEnum::PENDING->value) {
-                return response()->json([
+                return Response::json([
                     'message' => 'Tài khoản của bạn chưa được xác thực'
                 ], 403);
             }

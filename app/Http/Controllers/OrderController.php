@@ -11,7 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use DB;
 use App\Events\OrderStatusUpdated;
-
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Response;
 class OrderController extends Controller
 {
     public function __construct()
@@ -22,17 +23,17 @@ class OrderController extends Controller
 
     const RELATION_TABLES = ['user', 'service', 'price'];
 
-    public function getAll(Request $request)
+    public function getAll(Request $request): JsonResponse
     {
         $user = auth()->guard()->user();
         $service = $user->service();
         $order = Service::where('user_id', $user->id)->with('order')->get();
-        return response()->json($order);
+        return Response::json($order);
     }
 
     public function getById(Request $request, string $id)
     {
-        return response()->json(Order::findOrFail($id)->load(self::RELATION_TABLES));
+        return Response::json(Order::findOrFail($id)->load(self::RELATION_TABLES));
     }
 
     public function sendNewOrderMessage(Service $service, User $user)
@@ -69,7 +70,7 @@ class OrderController extends Controller
         Notification::sendToUser($user->id, $title, $body, $data, true);
     }
 
-    public function create(Request $request)
+    public function create(Request $request): JsonResponse
     {
         $validate = $request->validate([
             'service_id' => 'required|exists:services,id',
@@ -87,7 +88,7 @@ class OrderController extends Controller
                 array_merge(['user_id' => $user->id], $validate),
             );
             $this->sendNewOrderMessage($service, $user);
-            return response()->json($order->load(self::RELATION_TABLES));
+            return Response::json($order->load(self::RELATION_TABLES));
         });
     }
 
@@ -104,7 +105,7 @@ class OrderController extends Controller
                 $validate
             ]);
             $this->sendUpdateOrderMessage($order->service, $order->user, $validate['status']);
-            return response()->json($order->load(self::RELATION_TABLES));
+            return Response::json($order->load(self::RELATION_TABLES));
         });
     }
 
@@ -112,10 +113,10 @@ class OrderController extends Controller
     {
         $order = Order::findOrFail($id);
         $message = $order->forceDelete();
-        return response()->json(['message' => $message, 'deleted' => $order->load(self::RELATION_TABLES)]);
+        return Response::json(['message' => $message, 'deleted' => $order->load(self::RELATION_TABLES)]);
     }
 
-    public function getProviderOrders(Request $request)
+    public function getProviderOrders(Request $request): JsonResponse
     {
         $providerId = auth()->id();
         $status = $request->query('status', 'all');
@@ -265,7 +266,7 @@ class OrderController extends Controller
             });
 
             // Trả về kết quả phân trang với con trỏ tiếp theo và tổng số đơn hàng
-            return response()->json([
+            return Response::json([
                 'data' => $orders->items(),
                 'next_cursor' => $orders->nextCursor() ? $orders->nextCursor()->encode() : null,
                 'has_more' => $orders->hasMorePages(),
@@ -273,7 +274,7 @@ class OrderController extends Controller
             ]);
         } catch (\Exception $e) {
             \Log::error('Error fetching provider orders: ' . $e->getMessage());
-            return response()->json(['error' => $e->getMessage()], 500);
+            return Response::json(['error' => $e->getMessage()], 500);
         }
     }
 
@@ -287,7 +288,7 @@ class OrderController extends Controller
 
         // Kiểm tra xem order có thuộc về service của provider này không
         if ($order->service->user_id !== auth()->id()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+            return Response::json(['message' => 'Unauthorized'], 403);
         }
 
         // Chuyển đổi status string sang giá trị số
@@ -307,6 +308,6 @@ class OrderController extends Controller
         // Gửi thông báo cho user nếu cần
         // event(new OrderStatusUpdated($order));
 
-        return response()->json($order->load(['service', 'user', 'price']));
+        return Response::json($order->load(['service', 'user', 'price']));
     }
 }

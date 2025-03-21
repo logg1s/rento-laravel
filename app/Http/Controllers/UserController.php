@@ -17,7 +17,8 @@ use Storage;
 use Illuminate\Validation\Rule;
 use App\Enums\RoleEnum;
 use App\Models\Location;
-
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Response;
 class UserController extends Controller
 {
     public function __construct()
@@ -31,25 +32,23 @@ class UserController extends Controller
     ];
     public function me()
     {
-        return response()->json(auth()->guard()->user()->load(array_merge(self::LOAD_RELATION, [
+        return Response::json(auth()->guard()->user()->load(array_merge(self::LOAD_RELATION, [
             'viewedServiceLog' => function ($query) {
-                $query->orderBy('id', 'desc');
+                $query->orderBy('id', 'desc')->limit(10);
             },
-            'serviceFavorite' => function ($query) {
-                return $query->select('service_id')->get()->pluck('service_id')->toArray();
-            },
+
         ])));
     }
 
-    public function changeSetting(Request $request)
+    public function changeSetting(Request $request): JsonResponse
     {
         $validate = $request->validate(['is_notification' => 'required|boolean']);
         $user = auth()->guard()->user();
         $user->userSetting()->updateOrCreate([], $validate);
-        return response()->json($user->load('userSetting'));
+        return Response::json($user->load('userSetting'));
     }
 
-    public function getOrder(Request $request)
+    public function getOrder(Request $request): JsonResponse
     {
         $user = auth()->guard()->user();
         $orders = $user->order()->with([
@@ -58,14 +57,14 @@ class UserController extends Controller
             },
             'cancelBy',
         ])->get();
-        return response()->json($orders);
+        return Response::json($orders);
     }
 
 
     public function getById(Request $request, string $id)
     {
         $user = User::findOrFail($id);
-        return response()->json($user->load(array_merge(self::LOAD_RELATION, [
+        return Response::json($user->load(array_merge(self::LOAD_RELATION, [
             'service' => function ($query) {
                 $query->with('comment', 'category', 'location', 'price', 'userFavorite', 'benefit', 'user');
             },
@@ -85,11 +84,11 @@ class UserController extends Controller
             'status' => $validate['status'],
             'cancel_by' => $validate['status'] == StatusEnum::CANCELLED->value ? auth()->guard()->user()->id : null,
         ]);
-        return response()->json(['message' => 'Order updated successfully', 'order' => $order]);
+        return Response::json(['message' => 'Order updated successfully', 'order' => $order]);
     }
 
 
-    public function update(Request $request)
+    public function update(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'name' => ['nullable', 'max:50'],
@@ -149,11 +148,11 @@ class UserController extends Controller
             }
 
             $user->update($userData);
-            return response()->json($user);
+            return Response::json($user);
         });
     }
 
-    public function updatePassword(Request $request)
+    public function updatePassword(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'old_password' => ['required', 'max:50', Password::min(8)],
@@ -169,7 +168,7 @@ class UserController extends Controller
                     'password' => $validated['old_password']
                 ])
             ) {
-                return response()->json([
+                return Response::json([
                     'message' => 'Old password is incorrect'
                 ], 400);
             }
@@ -179,11 +178,11 @@ class UserController extends Controller
             $user->save();
 
 
-            return response()->json($user);
+            return Response::json($user);
         });
     }
 
-    public function uploadAvatar(Request $request)
+    public function uploadAvatar(Request $request): JsonResponse
     {
         $request->validate([
             'avatar' => ['required', 'image', 'mimes:jpeg,png,jpg,gif', 'max:100000']
@@ -213,13 +212,13 @@ class UserController extends Controller
             $user->image()->associate($image);
             $user->save();
 
-            return response()->json([
+            return Response::json([
                 'avatar' => $user->image,
                 'message' => 'Avatar updated successfully'
             ]);
         });
     }
-    public function uploadImage(Request $request)
+    public function uploadImage(Request $request): JsonResponse
     {
         $request->validate([
             'image' => ['required', 'mimes:jpeg,png,jpg,gif', 'max:1000000']
@@ -231,7 +230,7 @@ class UserController extends Controller
             $path = $request->file('image')->storeAs('images', $filename, "public");
             $image = Image::create(['path' => Storage::url($path)]);
 
-            return response()->json([
+            return Response::json([
                 'path' => Storage::url($path),
                 'message' => 'Image updated successfully'
             ]);
@@ -241,15 +240,15 @@ class UserController extends Controller
     {
         $user = auth()->guard()->user();
         $user->viewedServiceLog()->where('service_id', $id)->delete();
-        return response()->json(['message' => 'Viewed service deleted successfully']);
+        return Response::json(['message' => 'Viewed service deleted successfully']);
     }
-    public function deleteAllViewedService(Request $request)
+    public function deleteAllViewedService(Request $request): JsonResponse
     {
         $user = auth()->guard()->user();
         $user->viewedServiceLog()->delete();
-        return response()->json(['message' => 'All viewed services deleted successfully']);
+        return Response::json(['message' => 'All viewed services deleted successfully']);
     }
-    public function deleteImage(Request $request)
+    public function deleteImage(Request $request): JsonResponse
     {
         $request->validate([
             'imagePath' => ['required', 'string']
@@ -260,7 +259,7 @@ class UserController extends Controller
 
 
         if (empty($imagePath)) {
-            return response()->json([
+            return Response::json([
                 'message' => 'Image path is required'
             ], 400);
         }
@@ -278,18 +277,18 @@ class UserController extends Controller
 
                 Storage::disk('public')->delete($relativePath);
 
-                return response()->json([
+                return Response::json([
                     'message' => 'Image deleted successfully'
                 ]);
             } catch (\Exception $e) {
-                return response()->json([
+                return Response::json([
                     'message' => 'Failed to delete image',
                     'error' => $e->getMessage()
                 ], 500);
             }
         }
 
-        return response()->json([
+        return Response::json([
             'message' => 'Image not found'
         ], 404);
     }

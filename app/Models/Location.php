@@ -34,13 +34,16 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Location whereLng($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Location whereLocationName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Location whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Location whereAddress($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Location whereProvinceId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Location whereRealLocationName($value)
  * @mixin \Eloquent
  */
 class Location extends Model
 {
     public $fillable = ['location_name', 'lng', 'lat', 'real_location_name', 'province_id', 'address'];
     public $with = ['province'];
-
+    protected $hidden = ['pivot'];
     public function service(): HasMany
     {
         return $this->hasMany(Service::class);

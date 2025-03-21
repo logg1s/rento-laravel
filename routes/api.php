@@ -15,7 +15,7 @@ use App\Http\Controllers\ProviderStatisticController;
 use App\Http\Controllers\LocationController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('throttle:api')->group(function () {
+Route::group([], function () {
     Route::controller(AuthController::class)->prefix('auth')->group(function ($router) {
         Route::post('/login', 'login');
         Route::post('/logout', 'logout');
@@ -100,6 +100,7 @@ Route::middleware('throttle:api')->group(function () {
     Route::controller(FavoriteController::class)->prefix('favorites')->group(function () {
         Route::get('/', 'getFavorites');
         Route::post('/{serviceId}', 'toggleFavorite');
+        Route::get('/list', 'getListFavorite');
     });
 
     Route::controller(CommentController::class)->prefix('comments')->group(function () {
@@ -126,7 +127,7 @@ Route::middleware('throttle:api')->group(function () {
     });
 });
 
-Route::middleware(['throttle:api', 'auth:api'])->prefix('provider')->group(function () {
+Route::middleware(['auth:api'])->prefix('provider')->group(function () {
     // Quản lý dịch vụ
     Route::controller(ServiceController::class)->prefix('services')->group(function () {
         Route::get('/my-services', 'getMyServices');

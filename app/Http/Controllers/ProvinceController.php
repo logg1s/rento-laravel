@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Province;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Response;
 use Illuminate\Http\Request;
 
 class ProvinceController extends Controller
@@ -17,7 +18,7 @@ class ProvinceController extends Controller
     {
         $provinces = Province::orderBy('name')->get();
 
-        return response()->json([
+        return Response::json([
             'status' => 'success',
             'data' => $provinces
         ]);
@@ -33,7 +34,7 @@ class ProvinceController extends Controller
     {
         $province = Province::findOrFail($id);
 
-        return response()->json([
+        return Response::json([
             'status' => 'success',
             'data' => $province
         ]);
@@ -53,7 +54,7 @@ class ProvinceController extends Controller
             ->orderBy('name')
             ->get();
 
-        return response()->json([
+        return Response::json([
             'status' => 'success',
             'data' => $provinces
         ]);

@@ -69,6 +69,12 @@ use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User withTrashed()
  * @method static \Illuminate\Databa
  * Builder<static>|User withoutTrashed()
+ * @property int $status
+ * @property int|null $location_id
+ * @property-read \App\Models\Location|null $location
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereLocationId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User withoutTrashed()
  * @mixin \Eloquent
  */
 class User extends Authenticatable implements JWTSubject
@@ -94,7 +100,7 @@ class User extends Authenticatable implements JWTSubject
         'userSetting',
         'location'
     ];
-
+    protected $hidden = ['pivot', 'password'];
     public function order(): HasMany
     {
         return $this->hasMany(Order::class);
@@ -155,9 +161,7 @@ class User extends Authenticatable implements JWTSubject
         return $this->belongsTo(Location::class);
     }
 
-    protected $hidden = [
-        'password',
-    ];
+
 
     public function getJWTIdentifier()
     {

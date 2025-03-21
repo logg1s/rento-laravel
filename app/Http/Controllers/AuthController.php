@@ -22,7 +22,8 @@ use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\Rule;
 use Storage;
 use Str;
-
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Response;
 class AuthController extends Controller
 {
     const OTP_EXPIRY_MINUTES = 5;
@@ -34,21 +35,21 @@ class AuthController extends Controller
         $this->middleware('check.status', ['except' => ['login', 'register', 'refresh', 'checkEmail', 'loginWithGoogle', 'verifyCode', 'resendVerificationCode', 'forgotPassword', 'verifyForgotPassword']]);
     }
 
-    public function validateToken(Request $request)
+    public function validateToken(Request $request): JsonResponse
     {
-        return response()->json(['valid' => auth()->guard()->check()]);
+        return Response::json(['valid' => auth()->guard()->check()]);
     }
 
-    public function checkEmail(Request $request)
+    public function checkEmail(Request $request): JsonResponse
     {
         $isExist = User::where('email', $request->email)->exists();
         if ($isExist) {
-            return response()->json(['message' => false], 400);
+            return Response::json(['message' => false], 400);
         }
-        return response()->json(['message' => true]);
+        return Response::json(['message' => true]);
     }
 
-    public function register(Request $request)
+    public function register(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'max:50'],
@@ -113,7 +114,7 @@ class AuthController extends Controller
         });
     }
 
-    public function loginWithGoogle(Request $request)
+    public function loginWithGoogle(Request $request): JsonResponse
     {
         $validate = $request->validate(
             [
@@ -149,11 +150,11 @@ class AuthController extends Controller
         });
     }
 
-    public function login(Request $request)
+    public function login(Request $request): JsonResponse
     {
         $credentials = request(['email', 'password']);
         if (!$token = auth()->guard()->attempt($credentials)) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+            return Response::json(['error' => 'Unauthorized'], 401);
         }
 
         return $this->respondWithToken($token, auth()->guard()->user());
@@ -165,10 +166,10 @@ class AuthController extends Controller
         $user->update(['expo_token' => null]);
         auth()->guard()->logout();
 
-        return response()->json(['message' => 'Successfully logged out']);
+        return Response::json(['message' => 'Successfully logged out']);
     }
 
-    public function refresh(Request $request)
+    public function refresh(Request $request): JsonResponse
     {
         $token = auth()->guard()->refresh();
         return $this->respondWithToken($token);
@@ -196,7 +197,7 @@ class AuthController extends Controller
     /**
      * Xác thực mã code
      */
-    public function verifyCode(Request $request)
+    public function verifyCode(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'email' => ['required', 'email', 'max:100'],
@@ -209,7 +210,7 @@ class AuthController extends Controller
             ->first();
 
         if (!$verification) {
-            return response()->json([
+            return Response::json([
                 'message' => 'Mã xác thực không hợp lệ hoặc đã hết hạn'
             ], 400);
         }
@@ -223,7 +224,7 @@ class AuthController extends Controller
             $user->save();
         }
 
-        return response()->json([
+        return Response::json([
             'message' => 'Xác thực thành công'
         ]);
     }
@@ -231,7 +232,7 @@ class AuthController extends Controller
     /**
      * Gửi lại mã xác thực
      */
-    public function resendVerificationCode(Request $request)
+    public function resendVerificationCode(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'email' => ['required', 'email', 'max:100'],
@@ -240,7 +241,7 @@ class AuthController extends Controller
         // Kiểm tra xem email có tồn tại trong hệ thống không
         $user = User::where('email', $validated['email'])->first();
         if (!$user) {
-            return response()->json([
+            return Response::json([
                 'message' => 'Email không tồn tại trong hệ thống'
             ], 400);
         }
@@ -248,7 +249,7 @@ class AuthController extends Controller
         // Kiểm tra trạng thái user
 
         if ($user->status != UserStatusEnum::PENDING->value) {
-            return response()->json([
+            return Response::json([
                 'message' => 'Tài khoản đã được xác thực'
             ], 400);
         }
@@ -260,7 +261,7 @@ class AuthController extends Controller
 
         if ($lastVerification) {
             $remainingTime = now()->diffInSeconds($lastVerification->created_at->addMinutes(self::RESEND_OTP_DELAY_MINUTES));
-            return response()->json([
+            return Response::json([
                 'message' => 'Vui lòng đợi ' . ceil($remainingTime / 60) . ' giây nữa để gửi lại mã'
             ], 429);
         }
@@ -268,7 +269,7 @@ class AuthController extends Controller
         // Gửi mã mới
         $this->sendVerificationCode($validated['email']);
 
-        return response()->json([
+        return Response::json([
             'message' => 'Mã xác thực mới đã được gửi đến email của bạn'
         ]);
     }
@@ -276,7 +277,7 @@ class AuthController extends Controller
     /**
      * Gửi yêu cầu quên mật khẩu
      */
-    public function forgotPassword(Request $request)
+    public function forgotPassword(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'email' => ['required', 'email', 'max:100'],
@@ -289,7 +290,7 @@ class AuthController extends Controller
             ->first();
 
         if (!$user) {
-            return response()->json([
+            return Response::json([
                 'message' => 'Email không tồn tại hoặc không thể thực hiện quên mật khẩu'
             ], 400);
         }
@@ -297,7 +298,7 @@ class AuthController extends Controller
         // Gửi mã OTP
         $this->sendVerificationCode($validated['email']);
 
-        return response()->json([
+        return Response::json([
             'message' => 'Mã xác thực đã được gửi đến email của bạn'
         ]);
     }
@@ -305,7 +306,7 @@ class AuthController extends Controller
     /**
      * Xác thực OTP và đặt lại mật khẩu
      */
-    public function verifyForgotPassword(Request $request)
+    public function verifyForgotPassword(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'email' => ['required', 'email', 'max:100'],
@@ -320,7 +321,7 @@ class AuthController extends Controller
             ->first();
 
         if (!$user) {
-            return response()->json([
+            return Response::json([
                 'message' => 'Email không tồn tại hoặc không thể thực hiện quên mật khẩu'
             ], 400);
         }
@@ -332,7 +333,7 @@ class AuthController extends Controller
             ->first();
 
         if (!$verification) {
-            return response()->json([
+            return Response::json([
                 'message' => 'Mã xác thực không hợp lệ hoặc đã hết hạn'
             ], 400);
         }
@@ -342,14 +343,14 @@ class AuthController extends Controller
         $user->password = bcrypt($validated['new_password']);
         $user->save();
 
-        return response()->json([
+        return Response::json([
             'message' => 'Đặt lại mật khẩu thành công'
         ]);
     }
 
     protected function respondWithToken($token, $info = null)
     {
-        return response()->json(array_filter([
+        return Response::json(array_filter([
             'access_token' => $token,
             'token_type' => 'bearer',
             'expires_in' => auth()->guard()->factory()->getTTL() * 60,

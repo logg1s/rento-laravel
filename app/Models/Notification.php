@@ -37,7 +37,7 @@ use ExpoSDK\ExpoMessage;
 class Notification extends Model
 {
     protected $fillable = ['title', 'body', 'user_id', 'data', 'is_read'];
-
+    protected $hidden = ['pivot'];
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -59,6 +59,7 @@ class Notification extends Model
         if ($isSaveToDB) {
             $user->notification()->create(['title' => $title, 'body' => $body, json_encode($data)]);
         }
+
         return $response->getData();
     }
 }

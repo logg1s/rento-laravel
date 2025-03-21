@@ -37,7 +37,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Category extends Model
 {
     use SoftDeletes;
-    public function service() : HasMany
+    protected $hidden = ['pivot'];
+    public function service(): HasMany
     {
         return $this->hasMany(Service::class);
     }

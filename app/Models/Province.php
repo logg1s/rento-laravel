@@ -28,7 +28,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Province extends Model
 {
     protected $fillable = ['name', 'code'];
-
+    protected $hidden = ['pivot'];
     public function locations(): HasMany
     {
         return $this->hasMany(Location::class);

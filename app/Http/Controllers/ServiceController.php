@@ -8,11 +8,12 @@ use App\Models\Location;
 use App\Models\Service;
 use App\Models\ViewedServiceLog;
 use App\Utils\DirtyLog;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Storage;
-
 class ServiceController extends Controller
 {
     const DEFAULT_SIZE = 5;
@@ -43,17 +44,17 @@ class ServiceController extends Controller
         Redis::expire('service:all:keys', self::CACHE_TTL);
     }
 
-    public function getAll(Request $request)
+    public function getAll(Request $request): JsonResponse
     {
 
         $services = Service::with(array_merge(self::RELATION_TABLES, ['image']))
             ->orderBy('id', 'desc')
-            ->cursorPaginate(15);
+            ->cursorPaginate(5);
 
-        return response()->json($services, 200, [], JSON_UNESCAPED_UNICODE);
+        return Response::json($services, 200, [], JSON_UNESCAPED_UNICODE);
     }
 
-    public function getMyServices(Request $request)
+    public function getMyServices(Request $request): JsonResponse
     {
         $user = auth()->guard()->user();
         $query = Service::with(array_merge(self::RELATION_TABLES, ['image']))
@@ -76,10 +77,10 @@ class ServiceController extends Controller
         $services = $query->orderBy('id', 'desc')
             ->cursorPaginate($request->query('per_page', 5));
 
-        return response()->json($services, 200, [], JSON_UNESCAPED_UNICODE);
+        return Response::json($services, 200, [], JSON_UNESCAPED_UNICODE);
     }
 
-    public function getById(Request $request, string $id)
+    public function getById(Request $request, string $id): JsonResponse
     {
         $service = Service::findOrFail($id)->load(array_merge(self::RELATION_TABLES, self::RELATION_TABLE_DETAILS, ['image']));
         ViewedServiceLog::updateOrCreate([
@@ -99,20 +100,21 @@ class ServiceController extends Controller
 
         $service->suggested_services = $suggestedServices;
 
-        return response()->json($service);
+
+        return Response::json($service, 200, [], JSON_UNESCAPED_UNICODE);
     }
 
     /**
      * Lấy chi tiết dịch vụ cho nhà cung cấp
      */
-    public function getProviderServiceById(Request $request, string $id)
+    public function getProviderServiceById(Request $request, string $id): JsonResponse
     {
         $user = auth()->guard()->user();
         $service = Service::findOrFail($id);
 
         // Kiểm tra quyền sở hữu
         if ($service->user_id !== $user->id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+            return Response::json(['message' => 'Unauthorized'], 403);
         }
 
         // Load các quan hệ cần thiết
@@ -122,10 +124,10 @@ class ServiceController extends Controller
         $service->view_count = ViewedServiceLog::where('service_id', $service->id)->count();
         $service->order_count = $service->order()->count();
 
-        return response()->json($service);
+        return Response::json($service);
     }
 
-    public function create(Request $request)
+    public function create(Request $request): JsonResponse
     {
         $user = auth()->guard()->user();
         $validated = $request->validate([
@@ -199,11 +201,11 @@ class ServiceController extends Controller
             // Update first page cache since we have a new service
             $this->updateFirstPageCache();
 
-            return response()->json($service);
+            return Response::json($service);
         });
     }
 
-    public function update(Request $request, string $id)
+    public function update(Request $request, string $id): JsonResponse
     {
         $user = auth()->guard()->user();
 
@@ -233,7 +235,7 @@ class ServiceController extends Controller
 
             // Kiểm tra quyền sở hữu
             if ($service->user_id !== $user->id) {
-                return response()->json(['message' => 'Unauthorized'], 403);
+                return Response::json(['message' => 'Unauthorized'], 403);
             }
 
             $service->service_name = $validated['service_name'];
@@ -323,11 +325,11 @@ class ServiceController extends Controller
             // Update first page cache since we updated a service
             $this->updateFirstPageCache();
 
-            return response()->json($service);
+            return Response::json($service);
         });
     }
 
-    public function delete(Request $request, string $id, ?bool $force)
+    public function delete(Request $request, string $id, ?bool $force): JsonResponse
     {
         $service = Service::findOrFail($id);
 
@@ -345,10 +347,10 @@ class ServiceController extends Controller
             $this->updateFirstPageCache();
         });
 
-        return response()->json(['message' => 'success']);
+        return Response::json(['message' => 'success']);
     }
 
-    public function restore(Request $request, string $id)
+    public function restore(Request $request, string $id): JsonResponse
     {
         $service = Service::withTrashed()->findOrFail($id);
 
@@ -364,10 +366,10 @@ class ServiceController extends Controller
             $this->updateFirstPageCache();
         });
 
-        return response()->json(['message' => 'success']);
+        return Response::json(['message' => 'success']);
     }
 
-    public function restoreAll(Request $request)
+    public function restoreAll(Request $request): JsonResponse
     {
         DB::transaction(function () {
             $services = Service::onlyTrashed()->get();
@@ -384,20 +386,20 @@ class ServiceController extends Controller
             $this->updateFirstPageCache();
         });
 
-        return response()->json(['message' => 'success']);
+        return Response::json(['message' => 'success']);
     }
 
     /**
      * Thêm gói giá cho dịch vụ
      */
-    public function addServicePrice(Request $request, string $serviceId)
+    public function addServicePrice(Request $request, string $serviceId): JsonResponse
     {
         $user = auth()->guard()->user();
         $service = Service::findOrFail($serviceId);
 
         // Kiểm tra quyền sở hữu
         if ($service->user_id !== $user->id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+            return Response::json(['message' => 'Unauthorized'], 403);
         }
 
         $validated = $request->validate([
@@ -419,21 +421,21 @@ class ServiceController extends Controller
             Redis::set($key, json_encode($service));
             Redis::expire($key, self::CACHE_TTL);
 
-            return response()->json($price);
+            return Response::json($price);
         });
     }
 
     /**
      * Cập nhật gói giá cho dịch vụ
      */
-    public function updateServicePrice(Request $request, string $serviceId, string $priceId)
+    public function updateServicePrice(Request $request, string $serviceId, string $priceId): JsonResponse
     {
         $user = auth()->guard()->user();
         $service = Service::findOrFail($serviceId);
 
         // Kiểm tra quyền sở hữu
         if ($service->user_id !== $user->id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+            return Response::json(['message' => 'Unauthorized'], 403);
         }
 
         $price = $service->price()->findOrFail($priceId);
@@ -457,21 +459,21 @@ class ServiceController extends Controller
             Redis::set($key, json_encode($service));
             Redis::expire($key, self::CACHE_TTL);
 
-            return response()->json($price);
+            return Response::json($price);
         });
     }
 
     /**
      * Xóa gói giá cho dịch vụ
      */
-    public function deleteServicePrice(Request $request, string $serviceId, string $priceId)
+    public function deleteServicePrice(Request $request, string $serviceId, string $priceId): JsonResponse
     {
         $user = auth()->guard()->user();
         $service = Service::findOrFail($serviceId);
 
         // Kiểm tra quyền sở hữu
         if ($service->user_id !== $user->id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+            return Response::json(['message' => 'Unauthorized'], 403);
         }
 
         $price = $service->price()->findOrFail($priceId);
@@ -487,14 +489,14 @@ class ServiceController extends Controller
             Redis::set($key, json_encode($service));
             Redis::expire($key, self::CACHE_TTL);
 
-            return response()->json(['message' => 'success']);
+            return Response::json(['message' => 'success']);
         });
     }
 
     /**
      * Get counts of services by category
      */
-    public function getCategoryCounts(Request $request)
+    public function getCategoryCounts(Request $request): JsonResponse
     {
         $user = auth()->guard()->user();
 
@@ -508,7 +510,7 @@ class ServiceController extends Controller
             ->pluck('count', 'category_id')
             ->toArray();
 
-        return response()->json($counts);
+        return Response::json($counts);
     }
 
     /**
@@ -517,7 +519,7 @@ class ServiceController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getNearbyServices(Request $request)
+    public function getNearbyServices(Request $request): JsonResponse
     {
         $user = auth()->guard()->user();
         $radius = $request->input('radius', 10); // Bán kính tìm kiếm mặc định 10km
@@ -529,7 +531,7 @@ class ServiceController extends Controller
         if (!$lat || !$lng) {
             // Nếu không có tọa độ, tìm theo tỉnh/thành
             if (!$provinceId) {
-                return response()->json([
+                return Response::json([
                     'status' => 'error',
                     'message' => 'Vui lòng cung cấp vị trí hoặc tỉnh/thành của bạn'
                 ], 400);
@@ -549,7 +551,7 @@ class ServiceController extends Controller
                 return $service;
             });
 
-            return response()->json([
+            return Response::json([
                 'status' => 'success',
                 'data' => $services
             ]);
@@ -582,7 +584,7 @@ class ServiceController extends Controller
             return $service;
         });
 
-        return response()->json([
+        return Response::json([
             'status' => 'success',
             'data' => $services
         ]);

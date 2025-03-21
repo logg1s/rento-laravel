@@ -35,7 +35,7 @@ class ViewedServiceLog extends Model
         'service_id',
         'updated_at',
     ];
-
+    protected $hidden = ['pivot'];
 
     public function service(): BelongsTo
     {

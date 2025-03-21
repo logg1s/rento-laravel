@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use DB;
 use Illuminate\Http\Request;
-
-
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Response;
 class ChatbotController extends Controller
 {
     public function __construct()
@@ -23,7 +23,7 @@ class ChatbotController extends Controller
         }
         return false;
     }
-    public function run(Request $request)
+    public function run(Request $request): JsonResponse
     {
         $validate = $request->validate([
             'command' => 'required|string',
@@ -33,17 +33,12 @@ class ChatbotController extends Controller
         if (str_starts_with($command, 'select')) {
             if ($this->checkCommand($command)) {
                 $result = DB::select($command);
-                return response()->json($result);
+                return Response::json($result);
             } else {
-                return response()->json(['message' => 'Command is not valid'], 400);
+                return Response::json(['message' => 'Command is not valid'], 400);
             }
         }
 
-        return response()->json(['message' => 'Command is not valid'], 400);
-
-
-
-
-
+        return Response::json(['message' => 'Command is not valid'], 400);
     }
 }

@@ -6,7 +6,8 @@ use App\Models\Price;
 use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Response;
 class PriceController extends Controller
 {
     private const RELATION_TABLES = ['benefit'];
@@ -18,15 +19,15 @@ class PriceController extends Controller
 
     public function getAll()
     {
-        return response()->json(Price::orderBy('created_at', 'desc')->get()->load(self::RELATION_TABLES));
+        return Response::json(Price::orderBy('created_at', 'desc')->get()->load(self::RELATION_TABLES));
     }
 
     public function getById(Request $request, string $id)
     {
-        return response()->json(Price::findOrFail($id)->load(self::RELATION_TABLES));
+        return Response::json(Price::findOrFail($id)->load(self::RELATION_TABLES));
     }
 
-    public function create(Request $request)
+    public function create(Request $request): JsonResponse
     {
         $validate = $request->validate([
             'price_name' => ['required', 'max:50'],
@@ -40,7 +41,7 @@ class PriceController extends Controller
             $price->price_value = $validate['price_value'];
             $price->service()->associate($service);
             $price->save();
-            return response()->json($price->load(self::RELATION_TABLES));
+            return Response::json($price->load(self::RELATION_TABLES));
         });
     }
 
@@ -55,7 +56,7 @@ class PriceController extends Controller
             $price->price_name = $validate['price_name'];
             $price->price_value = $validate['price_value'];
             $price->save();
-            return response()->json($price->load(self::RELATION_TABLES));
+            return Response::json($price->load(self::RELATION_TABLES));
         });
     }
 
@@ -64,14 +65,14 @@ class PriceController extends Controller
         return DB::transaction(function () use ($id) {
             $price = Price::findOrFail($id);
             $price->forceDelete();
-            return response()->json(['message' => 'success']);
+            return Response::json(['message' => 'success']);
         });
     }
 
     /**
      * Thêm giá và đồng thời liên kết với nhiều benefits
      */
-    public function createWithBenefits(Request $request)
+    public function createWithBenefits(Request $request): JsonResponse
     {
         $validate = $request->validate([
             'price_name' => ['required', 'max:50'],
@@ -95,7 +96,7 @@ class PriceController extends Controller
                 $price->benefit()->syncWithoutDetaching($validate['benefit_ids']);
             }
 
-            return response()->json($price->load(self::RELATION_TABLES));
+            return Response::json($price->load(self::RELATION_TABLES));
         });
     }
 
@@ -123,14 +124,14 @@ class PriceController extends Controller
                 $price->benefit()->sync($validate['benefit_ids']);
             }
 
-            return response()->json($price->load(self::RELATION_TABLES));
+            return Response::json($price->load(self::RELATION_TABLES));
         });
     }
 
     /**
      * Cập nhật nhiều giá cùng lúc
      */
-    public function bulkUpdate(Request $request)
+    public function bulkUpdate(Request $request): JsonResponse
     {
         $validate = $request->validate([
             'prices' => ['required', 'array'],
@@ -157,7 +158,7 @@ class PriceController extends Controller
                 $updated[] = $price->load(self::RELATION_TABLES);
             }
 
-            return response()->json($updated);
+            return Response::json($updated);
         });
     }
 }

@@ -7,7 +7,8 @@ use App\Models\Service;
 use App\Models\User;
 use App\Utils\DirtyLog;
 use Illuminate\Http\Request;
-
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Response;
 class NotificationController extends Controller
 {
     public function __construct()
@@ -25,32 +26,32 @@ class NotificationController extends Controller
         'data' => 'nullable|array'
     ];
 
-    public function registerToken(Request $request)
+    public function registerToken(Request $request): JsonResponse
     {
         $validate = $request->validate(['expo_token' => 'required|string']);
         $user = auth()->guard()->user();
         $user->update($validate);
-        return response()->json(['message' => 'register token success', 'expo_token' => $user->expo_token]);
+        return Response::json(['message' => 'register token success', 'expo_token' => $user->expo_token]);
     }
 
-    public function deleteToken(Request $request)
+    public function deleteToken(Request $request): JsonResponse
     {
         $user = auth()->guard()->user();
         $user->update(['expo_token' => null]);
-        return response()->json(['message' => 'delete token success', 'expo_token' => $user->expo_token]);
+        return Response::json(['message' => 'delete token success', 'expo_token' => $user->expo_token]);
     }
 
-    public function getAll(Request $request)
+    public function getAll(Request $request): JsonResponse
     {
         $size = $request->query('size', 50);
         $user = auth()->guard()->user();
         $category = Notification::where('user_id', $user->id)->with(self::RELATION_TABLES)->orderBy('id', 'desc')->cursorPaginate($size);
-        return response()->json($category);
+        return Response::json($category);
     }
 
     public function getById(Request $request, string $id)
     {
-        return response()->json(Notification::findOrFail($id)->load(self::RELATION_TABLES));
+        return Response::json(Notification::findOrFail($id)->load(self::RELATION_TABLES));
     }
 
     public function chatNotification(Request $request, string $id)
@@ -64,10 +65,10 @@ class NotificationController extends Controller
             $data = ['type' => 'message', 'id' => $sender->id];
             Notification::sendToUser($id, $title, $body, $data, false, 'messaging');
         }
-        return response()->json(['message' => 'success']);
+        return Response::json(['message' => 'success']);
     }
 
-    public function create(Request $request)
+    public function create(Request $request): JsonResponse
     {
         $validated = $request->validate(self::RULE_REQUEST);
         $receiver = User::findOrFail($validated['receiver_id']);
@@ -78,26 +79,26 @@ class NotificationController extends Controller
             $validated['data'] = json_encode($validated['data']);
         }
         $notification = $receiver->notification()->create($validated)->load(self::RELATION_TABLES);
-        return response()->json(['notification' => $notification, 'result' => $result]);
+        return Response::json(['notification' => $notification, 'result' => $result]);
     }
 
     public function delete(Request $request, string $id)
     {
         Notification::findOrFail($id)->delete();
-        return response()->json(['message' => 'success']);
+        return Response::json(['message' => 'success']);
     }
 
-    public function readedAll(Request $request)
+    public function readedAll(Request $request): JsonResponse
     {
         $user = auth()->guard()->user();
         $user->notification()->update(['is_read' => 1]);
-        return response()->json(['message' => 'sucesss']);
+        return Response::json(['message' => 'sucesss']);
     }
 
     public function readedById(Request $request, string $id)
     {
         $notification = Notification::findOrFail($id);
         $notification->update(['is_read' => 1]);
-        return response()->json(['message' => 'sucesss']);
+        return Response::json(['message' => 'sucesss']);
     }
 }

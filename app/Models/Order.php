@@ -60,7 +60,7 @@ class Order extends Model
         'message',
         'cancel_by',
     ];
-
+    protected $hidden = ['pivot'];
     public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);

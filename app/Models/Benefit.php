@@ -35,7 +35,7 @@ class Benefit extends Model
 {
     protected $fillable = ['benefit_name', 'service_id'];
     protected $appends = ['price_id'];
-
+    protected $hidden = ['pivot'];
     public function priceId(): Attribute
     {
         return new Attribute(get: function () {

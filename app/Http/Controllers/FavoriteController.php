@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\ProcessFavoriteUpdate;
-use App\Models\Service;
-use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redis;
-
+use App\Models\Service;
 class FavoriteController extends Controller
 {
 
@@ -21,18 +20,24 @@ class FavoriteController extends Controller
         $this->middleware('check.status');
     }
 
-    public function getFavorites()
+    public function getFavorites(): JsonResponse
     {
         $user = Auth::user();
         $favorites = $user->serviceFavorite()
             ->with(self::RELATION_TABLES)
             ->where('favorite.user_id', $user->id)
             ->orderBy('id', 'desc')->get();
-
-        return response()->json($favorites);
+        return Response::json($favorites);
     }
-
-    public function toggleFavorite(Request $request, string $serviceId)
+    // get list favorite: return only array of service_id: [...]
+    public function getListFavorite(): JsonResponse
+    {
+        $user = Auth::user();
+        $favorites = $user->serviceFavorite()
+            ->orderBy('id', 'desc')->get();
+        return Response::json(['service_ids' => $favorites->pluck('id')]);
+    }
+    public function toggleFavorite(Request $request, string $serviceId): JsonResponse
     {
         $validate = $request->validate(['action' => 'required|boolean']);
         $isLiked = $validate['action'];
@@ -46,6 +51,6 @@ class FavoriteController extends Controller
             $user->serviceFavorite()->detach($service);
         }
 
-        return response()->json(['message' => "Success " . $isLiked ? 'liked' : 'disliked']);
+        return Response::json(['message' => "Success " . $isLiked ? 'liked' : 'disliked']);
     }
 }

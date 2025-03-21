@@ -30,6 +30,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Image whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Image wherePath($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Image whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Image onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Image withTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Image withoutTrashed()
  * @mixin \Eloquent
  */
 class Image extends Model
@@ -37,7 +40,7 @@ class Image extends Model
     use SoftDeletes;
 
     protected $fillable = ['path'];
-
+    protected $hidden = ['pivot'];
     public function service(): BelongsToMany
     {
         return $this->belongsToMany(Service::class);

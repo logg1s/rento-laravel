@@ -61,9 +61,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Service extends Model
 {
     use SoftDeletes;
-
+    protected $hidden = ['pivot'];
     protected $appends = ['comment_count', 'average_rate', 'comment_by_you'];
-
 
 
     public function commentByYou(): Attribute

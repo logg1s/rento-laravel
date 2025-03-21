@@ -38,7 +38,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Price extends Model
 {
     public $fillable = ['price_name', 'price_value'];
-
+    protected $hidden = ['pivot'];
     public function service(): BelongsTo
     {
         return $this->belongsTo(Service::class);
