@@ -31,7 +31,7 @@ class OrderController extends Controller
         return Response::json($order);
     }
 
-    public function getById(Request $request, string $id)
+    public function getById(Request $request, string $id): JsonResponse
     {
         return Response::json(Order::findOrFail($id)->load(self::RELATION_TABLES));
     }
@@ -40,7 +40,7 @@ class OrderController extends Controller
     {
         $title = 'Bạn có đơn dịch vụ mới';
         $body = 'Đơn dịch vụ ' . $service->service_name . ' của người dùng ' . $user->name;
-        $data = ['tag' => 'order'];
+        $data = ['type' => 'order'];
         Notification::sendToUser($service->user->id, $title, $body, $data, true);
     }
 

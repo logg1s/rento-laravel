@@ -196,3 +196,13 @@ Route::get('/reports', 'App\Http\Controllers\ReportController@index');
 Route::get('/reports/{id}', 'App\Http\Controllers\ReportController@show');
 Route::patch('/reports/{id}', 'App\Http\Controllers\ReportController@update');
 
+
+// Route::prefix('v2')->group(function () {
+//     Route::prefix('services')->group(function () {
+//         Route::get('/', 'App\Http\Controllers\ServiceController@index');
+//         Route::get('/{id}', 'App\Http\Controllers\ServiceController@show');
+//         Route::post('/', 'App\Http\Controllers\ServiceController@store');
+//         Route::put('/{id}', 'App\Http\Controllers\ServiceController@update');
+//         Route::delete('/{id}', 'App\Http\Controllers\ServiceController@destroy');
+//     });
+// });

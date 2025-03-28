@@ -33,10 +33,9 @@ class UserController extends Controller
     public function me()
     {
         return Response::json(auth()->guard()->user()->load(array_merge(self::LOAD_RELATION, [
-            'viewedServiceLog' => function ($query) {
-                $query->orderBy('id', 'desc')->limit(10);
+            "viewedServiceLog" => function ($query) {
+                $query->orderBy("id", "desc")->limit(10);
             },
-
         ])));
     }
 

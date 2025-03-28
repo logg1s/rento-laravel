@@ -31,47 +31,47 @@ class AuthController extends Controller
 
     public function __construct()
     {
-        $this->middleware('auth:api', ['except' => ['login', 'register', 'refresh', 'checkEmail', 'loginWithGoogle', 'verifyCode', 'resendVerificationCode', 'forgotPassword', 'verifyForgotPassword']]);
-        $this->middleware('check.status', ['except' => ['login', 'register', 'refresh', 'checkEmail', 'loginWithGoogle', 'verifyCode', 'resendVerificationCode', 'forgotPassword', 'verifyForgotPassword']]);
+        $this->middleware("auth:api", ["except" => ["login", "register", "refresh", "checkEmail", "loginWithGoogle", "verifyCode", "resendVerificationCode", "forgotPassword", "verifyForgotPassword"]]);
+        $this->middleware("check.status", ["except" => ["login", "register", "refresh", "checkEmail", "loginWithGoogle", "verifyCode", "resendVerificationCode", "forgotPassword", "verifyForgotPassword"]]);
     }
 
     public function validateToken(Request $request): JsonResponse
     {
-        return Response::json(['valid' => auth()->guard()->check()]);
+        return Response::json(["valid" => auth()->guard()->check()]);
     }
 
     public function checkEmail(Request $request): JsonResponse
     {
-        $isExist = User::where('email', $request->email)->exists();
+        $isExist = User::where("email", $request->email)->exists();
         if ($isExist) {
-            return Response::json(['message' => false], 400);
+            return Response::json(["message" => false], 400);
         }
-        return Response::json(['message' => true]);
+        return Response::json(["message" => true]);
     }
 
     public function register(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'name' => ['required', 'max:50'],
-            'email' => ['email', 'unique:users', 'max:100'],
-            'password' => ['required', 'max:50', Password::min(8)],
-            'phone_number' => ['required', 'min:4'],
-            'address' => ['max: 255'],
-            'lng' => ['nullable', 'numeric'],
-            'lat' => ['nullable', 'numeric'],
-            'real_address' => ['nullable', 'max: 255'],
-            'role' => [Rule::enum(RoleEnum::class)],
+            "name" => ["required", "max:50"],
+            "email" => ["email", "unique:users", "max:100"],
+            "password" => ["required", "max:50", Password::min(8)],
+            "phone_number" => ["required", "min:4"],
+            "address" => ["max: 255"],
+            "lng" => ["nullable", "numeric"],
+            "lat" => ["nullable", "numeric"],
+            "real_address" => ["nullable", "max: 255"],
+            "role" => [Rule::enum(RoleEnum::class)],
         ]);
 
-        $role = Role::findOrFail($validated['role']);
+        $role = Role::findOrFail($validated["role"]);
 
         return DB::transaction(function () use ($validated, $role) {
             $user = new User;
-            $user->name = $validated['name'];
-            $user->email = $validated['email'];
-            $user->password = bcrypt($validated['password']);
-            $user->phone_number = $validated['phone_number'];
-            $user->address = $validated['address'];
+            $user->name = $validated["name"];
+            $user->email = $validated["email"];
+            $user->password = bcrypt($validated["password"]);
+            $user->phone_number = $validated["phone_number"];
+            $user->address = $validated["address"];
             $user->status = UserStatusEnum::PENDING->value;
             $user->save();
             $user->role()->attach($role);
@@ -79,24 +79,24 @@ class AuthController extends Controller
             $user->userSetting()->create(['is_notification' => true]);
 
             // Lưu địa chỉ thật từ geolocation nếu có
-            if (isset($validated['real_address']) || isset($validated['lat']) || isset($validated['lng'])) {
+            if (isset($validated["real_address"]) || isset($validated["lat"]) || isset($validated["lng"])) {
                 // Tạo location cho user
                 $locationData = [];
 
-                if (isset($validated['address'])) {
-                    $locationData['location_name'] = $validated['address'];
+                if (isset($validated["address"])) {
+                    $locationData["location_name"] = $validated["address"];
                 }
 
-                if (isset($validated['real_address'])) {
-                    $locationData['real_location_name'] = $validated['real_address'];
+                if (isset($validated["real_address"])) {
+                    $locationData["real_location_name"] = $validated["real_address"];
                 }
 
-                if (isset($validated['lng'])) {
-                    $locationData['lng'] = $validated['lng'];
+                if (isset($validated["lng"])) {
+                    $locationData["lng"] = $validated["lng"];
                 }
 
-                if (isset($validated['lat'])) {
-                    $locationData['lat'] = $validated['lat'];
+                if (isset($validated["lat"])) {
+                    $locationData["lat"] = $validated["lat"];
                 }
 
                 if (!empty($locationData)) {
@@ -118,32 +118,32 @@ class AuthController extends Controller
     {
         $validate = $request->validate(
             [
-                'email' => 'required|email',
-                'name' => 'required|max:50',
-                'image_url' => 'required|url',
+                "email" => "required|email",
+                "name" => "required|max:50",
+                "image_url" => "required|url",
             ]
         );
 
         return DB::transaction(function () use ($request, $validate) {
-            $user = User::where('email', $request->email)->first();
+            $user = User::where("email", $request->email)->first();
             if (!$user) {
-                $salt = config('jwt.secret');
-                $password = hash('sha256', $validate['email'] . $salt);
+                $salt = config("jwt.secret");
+                $password = hash("sha256", $validate["email"] . $salt);
                 $user = User::create([
-                    'name' => $validate['name'],
-                    'email' => $validate['email'],
-                    'is_oauth' => true,
-                    'password' => bcrypt(substr($password, 0, 8)),
-                    'status' => UserStatusEnum::ACTIVE->value,
+                    "name" => $validate["name"],
+                    "email" => $validate["email"],
+                    "is_oauth" => true,
+                    "password" => bcrypt(substr($password, 0, 8)),
+                    "status" => UserStatusEnum::ACTIVE->value,
                 ]);
 
-                $image = Image::create(['path' => $validate['image_url']]);
+                $image = Image::create(["path" => $validate["image_url"]]);
                 $user->image()->associate($image);
                 $user->save();
                 $role = Role::findOrFail(RoleEnum::USER->value);
                 $user->role()->attach($role);
                 $user->channelNotification()->attach($role->id);
-                $user->userSetting()->create(['is_notification' => true]);
+                $user->userSetting()->create(["is_notification" => true]);
             }
             $token = auth()->guard()->login($user);
             return $this->respondWithToken($token);
@@ -152,9 +152,9 @@ class AuthController extends Controller
 
     public function login(Request $request): JsonResponse
     {
-        $credentials = request(['email', 'password']);
+        $credentials = request(["email", "password"]);
         if (!$token = auth()->guard()->attempt($credentials)) {
-            return Response::json(['error' => 'Unauthorized'], 401);
+            return Response::json(["error" => "Unauthorized"], 401);
         }
 
         return $this->respondWithToken($token, auth()->guard()->user());
@@ -166,7 +166,7 @@ class AuthController extends Controller
         $user->update(['expo_token' => null]);
         auth()->guard()->logout();
 
-        return Response::json(['message' => 'Successfully logged out']);
+        return Response::json(["message" => "Successfully logged out"]);
     }
 
     public function refresh(Request $request): JsonResponse
@@ -183,10 +183,10 @@ class AuthController extends Controller
         $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
         EmailVerification::updateOrCreate(
-            ['email' => $email],
+            ["email" => $email],
             [
-                'code' => $code,
-                'expires_at' => now()->addMinutes(self::OTP_EXPIRY_MINUTES)
+                "code" => $code,
+                "expires_at" => now()->addMinutes(self::OTP_EXPIRY_MINUTES)
             ]
         );
 
@@ -205,8 +205,8 @@ class AuthController extends Controller
         ]);
 
         $verification = EmailVerification::where('email', $validated['email'])
-            ->where('code', $validated['code'])
-            ->where('expires_at', '>', now())
+            ->where("code", $validated["code"])
+            ->where("expires_at", ">", now())
             ->first();
 
         if (!$verification) {
@@ -280,18 +280,18 @@ class AuthController extends Controller
     public function forgotPassword(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'email' => ['required', 'email', 'max:100'],
+            "email" => ["required", "email", "max:100"],
         ]);
 
         // Kiểm tra email có tồn tại và là tài khoản thường
         $user = User::where('email', $validated['email'])
-            ->where('is_oauth', false)
-            ->where('status', UserStatusEnum::ACTIVE->value)
+            ->where("is_oauth", false)
+            ->where("status", UserStatusEnum::ACTIVE->value)
             ->first();
 
         if (!$user) {
             return Response::json([
-                'message' => 'Email không tồn tại hoặc không thể thực hiện quên mật khẩu'
+                "message" => "Email không tồn tại hoặc không thể thực hiện quên mật khẩu"
             ], 400);
         }
 
@@ -299,7 +299,7 @@ class AuthController extends Controller
         $this->sendVerificationCode($validated['email']);
 
         return Response::json([
-            'message' => 'Mã xác thực đã được gửi đến email của bạn'
+            "message" => "Mã xác thực đã được gửi đến email của bạn"
         ]);
     }
 
@@ -309,32 +309,32 @@ class AuthController extends Controller
     public function verifyForgotPassword(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'email' => ['required', 'email', 'max:100'],
-            'code' => ['required', 'string', 'size:6'],
-            'new_password' => ['required', 'max:50', Password::min(8)],
+            "email" => ["required", "email", "max:100"],
+            "code" => ["required", "string", "size:6"],
+            "new_password" => ["required", "max:50", Password::min(8)],
         ]);
 
         // Kiểm tra email có tồn tại và là tài khoản thường
         $user = User::where('email', $validated['email'])
-            ->where('is_oauth', false)
-            ->where('status', UserStatusEnum::ACTIVE->value)
+            ->where("is_oauth", false)
+            ->where("status", UserStatusEnum::ACTIVE->value)
             ->first();
 
         if (!$user) {
             return Response::json([
-                'message' => 'Email không tồn tại hoặc không thể thực hiện quên mật khẩu'
+                "message" => "Email không tồn tại hoặc không thể thực hiện quên mật khẩu"
             ], 400);
         }
 
         // Xác thực mã OTP
         $verification = EmailVerification::where('email', $validated['email'])
-            ->where('code', $validated['code'])
-            ->where('expires_at', '>', now())
+            ->where("code", $validated["code"])
+            ->where("expires_at", ">", now())
             ->first();
 
         if (!$verification) {
             return Response::json([
-                'message' => 'Mã xác thực không hợp lệ hoặc đã hết hạn'
+                "message" => "Mã xác thực không hợp lệ hoặc đã hết hạn"
             ], 400);
         }
 
@@ -344,17 +344,17 @@ class AuthController extends Controller
         $user->save();
 
         return Response::json([
-            'message' => 'Đặt lại mật khẩu thành công'
+            "message" => "Đặt lại mật khẩu thành công"
         ]);
     }
 
     protected function respondWithToken($token, $info = null)
     {
         return Response::json(array_filter([
-            'access_token' => $token,
-            'token_type' => 'bearer',
-            'expires_in' => auth()->guard()->factory()->getTTL() * 60,
-            'info' => $info
+            "access_token" => $token,
+            "token_type" => "bearer",
+            "expires_in" => auth()->guard()->factory()->getTTL() * 60,
+            "info" => $info
         ]));
     }
 }
