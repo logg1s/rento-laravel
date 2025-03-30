@@ -116,15 +116,17 @@ class ServiceController extends Controller
         $user = auth()->guard()->user();
         $service = Service::findOrFail($id);
 
-        // Kiểm tra quyền sở hữu
         if ($service->user_id !== $user->id) {
             return Response::json(['message' => 'Unauthorized'], 403);
         }
 
-        // Load các quan hệ cần thiết
-        $service->load(array_merge(self::RELATION_TABLES, self::RELATION_TABLE_DETAILS, ['image']));
+        $service->load(array_merge(self::RELATION_TABLES, self::RELATION_TABLE_DETAILS, [
+            "image",
+            "comment" => function ($query) {
+                $query->with('user');
+            }
+        ]));
 
-        // Thêm thông tin thống kê
         $service->view_count = ViewedServiceLog::where('service_id', $service->id)->count();
         $service->order_count = $service->order()->count();
 
@@ -153,12 +155,10 @@ class ServiceController extends Controller
             $service->service_name = $validated['service_name'];
             $service->service_description = $validated['service_description'];
 
-            // Tạo location với thông tin kinh độ, vĩ độ và địa chỉ thật
             $locationData = [
                 'location_name' => $validated['location_name']
             ];
 
-            // Thêm thông tin kinh độ, vĩ độ và địa chỉ thật nếu có
             if (isset($validated['lng'])) {
                 $locationData['lng'] = $validated['lng'];
             }
@@ -185,7 +185,6 @@ class ServiceController extends Controller
             $service->category()->associate($category);
             $service->save();
 
-            // Xử lý hình ảnh
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $imageFile) {
                     $path = $imageFile->store('services', 'public');
@@ -194,10 +193,8 @@ class ServiceController extends Controller
                 }
             }
 
-            // Load relations
             $service->load(array_merge(self::RELATION_TABLES, ['image']));
 
-            // Cache single service
             $key = "service:{$service->id}";
             Redis::set($key, json_encode($service));
             Redis::expire($key, self::CACHE_TTL);

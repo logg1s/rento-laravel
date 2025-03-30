@@ -291,7 +291,6 @@ class OrderController extends Controller
             return Response::json(['message' => 'Unauthorized'], 403);
         }
 
-        // Chuyển đổi status string sang giá trị số
         $statusMapping = [
             'cancelled' => 0,
             'pending' => 1,
@@ -301,12 +300,6 @@ class OrderController extends Controller
 
         $order->status = $statusMapping[$request->status];
         $order->save();
-
-        // Log để debug
-        \Log::info('Order status updated: Order #' . $id . ' -> ' . $request->status);
-
-        // Gửi thông báo cho user nếu cần
-        // event(new OrderStatusUpdated($order));
 
         return Response::json($order->load(['service', 'user', 'price']));
     }
