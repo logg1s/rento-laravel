@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Comment;
 use App\Models\Service;
+use App\Utils\DirtyLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
@@ -32,12 +33,12 @@ class CommentController extends Controller
     /**
      * Get all comments for a specific service
      */
-    public function getCommentsByServiceId(string $id): JsonResponse
+    public function getCommentsByServiceId(Request $request, string $id): JsonResponse
     {
         $comments = Comment::where('service_id', $id)
-            ->with(['user'])
-            ->orderBy('created_at', 'desc')
-            ->cursorPaginate(perPage: 5);
+            ->with('user')
+            ->orderBy('id')
+            ->cursorPaginate(10);
 
         return Response::json($comments);
     }

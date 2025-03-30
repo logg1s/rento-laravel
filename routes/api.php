@@ -144,16 +144,14 @@ Route::middleware(['auth:api'])->prefix('provider')->group(function () {
         Route::delete('/{serviceId}/prices/{priceId}', 'deleteServicePrice');
     });
 
-    // Quản lý đơn hàng
+
     Route::controller(OrderController::class)->prefix('orders')->group(function () {
         Route::get('/my-orders', 'getProviderOrders');
         Route::put('/{id}/status', 'updateOrderStatus');
     });
 
-    // Quản lý đánh giá
     Route::controller(CommentController::class)->prefix('comments')->group(function () {
-        Route::get('/my-services', 'getServiceComments');
-        Route::post('/{commentId}/reply', 'replyToComment');
+        Route::get('/{id}', 'getCommentsByServiceId');
     });
 
     // Thống kê

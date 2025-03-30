@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\StatusEnum;
 use App\Models\Category;
+use App\Models\Comment;
 use App\Models\Image;
 use App\Models\Location;
 use App\Models\Service;
@@ -121,10 +122,7 @@ class ServiceController extends Controller
         }
 
         $service->load(array_merge(self::RELATION_TABLES, self::RELATION_TABLE_DETAILS, [
-            "image",
-            "comment" => function ($query) {
-                $query->with('user');
-            }
+            "image"
         ]));
 
         $service->view_count = ViewedServiceLog::where('service_id', $service->id)->count();
