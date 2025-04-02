@@ -13,10 +13,10 @@ class BenefitSeeder extends Seeder
      */
     public function run(): void
     {
-        // Lấy tất cả dịch vụ
+
         $services = Service::all();
 
-        // Các lợi ích tiêu chuẩn theo từng loại dịch vụ
+
         $benefitsByCategory = [
             'Dọn dẹp' => [
                 'Đảm bảo sạch sẽ 100%',
@@ -62,12 +62,12 @@ class BenefitSeeder extends Seeder
             ]
         ];
 
-        // Tạo lợi ích cho mỗi dịch vụ
+
         foreach ($services as $service) {
             $categoryName = $service->category->category_name;
             $benefits = $benefitsByCategory[$categoryName] ?? $benefitsByCategory['Khác'];
 
-            // Thêm 3-5 lợi ích cho mỗi dịch vụ
+
             $benefitCount = rand(3, 5);
             $selectedBenefits = array_slice($benefits, 0, $benefitCount);
 

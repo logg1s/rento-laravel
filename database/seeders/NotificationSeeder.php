@@ -15,10 +15,10 @@ class NotificationSeeder extends Seeder
      */
     public function run(): void
     {
-        // Lấy các đơn hàng đã tạo
+
         $orders = Order::all();
 
-        // Nhóm thông báo trạng thái đơn hàng
+
         $orderNotifications = [
             'Đơn hàng của bạn đã được xác nhận',
             'Đơn hàng của bạn đã hoàn tất',
@@ -27,7 +27,7 @@ class NotificationSeeder extends Seeder
             'Nhắc nhở: Đơn hàng sắp đến thời gian thực hiện',
         ];
 
-        // Nhóm thông báo hệ thống
+
         $systemNotifications = [
             'Chào mừng bạn đến với Rento!',
             'Cập nhật chính sách bảo mật mới',
@@ -36,9 +36,9 @@ class NotificationSeeder extends Seeder
             'Đánh giá dịch vụ gần đây nhất của bạn',
         ];
 
-        // Tạo thông báo từ các đơn hàng
+
         foreach ($orders as $order) {
-            // Tạo thông báo cho khách hàng
+
             Notification::create([
                 'user_id' => $order->user_id,
                 'title' => $orderNotifications[array_rand($orderNotifications)],
@@ -48,7 +48,7 @@ class NotificationSeeder extends Seeder
                 'is_read' => rand(0, 1),
             ]);
 
-            // Tạo thông báo cho nhà cung cấp dịch vụ
+
             Notification::create([
                 'user_id' => $order->service->user_id,
                 'title' => "Đơn đặt hàng mới #" . $order->id,
@@ -59,10 +59,9 @@ class NotificationSeeder extends Seeder
             ]);
         }
 
-        // Tạo thông báo hệ thống cho tất cả người dùng
+
         $users = User::all();
         foreach ($users as $user) {
-            // Tạo 2-4 thông báo hệ thống cho mỗi người dùng
             $notificationCount = rand(2, 4);
             for ($i = 0; $i < $notificationCount; $i++) {
                 $title = $systemNotifications[array_rand($systemNotifications)];

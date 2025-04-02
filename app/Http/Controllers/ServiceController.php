@@ -62,12 +62,11 @@ class ServiceController extends Controller
         $query = Service::with(array_merge(self::RELATION_TABLES, ['image']))
             ->where('user_id', $user->id);
 
-        // Apply category filter
+
         if ($request->has('category_id') && $request->category_id !== 'all') {
             $query->where('category_id', $request->category_id);
         }
 
-        // Apply search query
         if ($request->has('search') && !empty($request->search)) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -197,7 +196,7 @@ class ServiceController extends Controller
             Redis::set($key, json_encode($service));
             Redis::expire($key, self::CACHE_TTL);
 
-            // Update first page cache since we have a new service
+
             $this->updateFirstPageCache();
 
             return Response::json($service);
@@ -207,9 +206,6 @@ class ServiceController extends Controller
     public function update(Request $request, string $id): JsonResponse
     {
         $user = auth()->guard()->user();
-
-        // Log dữ liệu nhận được để debug
-        \Log::info('Update service request data:', $request->all());
 
         $validated = $request->validate([
             'service_name' => ['required', 'max:50'],
@@ -232,7 +228,7 @@ class ServiceController extends Controller
         return DB::transaction(function () use ($validated, $user, $category, $id, $request) {
             $service = Service::findOrFail($id);
 
-            // Kiểm tra quyền sở hữu
+
             if ($service->user_id !== $user->id) {
                 return Response::json(['message' => 'Unauthorized'], 403);
             }
@@ -240,12 +236,12 @@ class ServiceController extends Controller
             $service->service_name = $validated['service_name'];
             $service->service_description = $validated['service_description'];
 
-            // Cập nhật location hiện có thay vì tạo mới
+
             $locationData = [
                 'location_name' => $validated['location_name']
             ];
 
-            // Thêm thông tin kinh độ, vĩ độ và địa chỉ thật nếu có
+
             if (isset($validated['lng'])) {
                 $locationData['lng'] = $validated['lng'];
             }
@@ -266,18 +262,18 @@ class ServiceController extends Controller
                 $locationData['address'] = $validated['address'];
             }
 
-            // Cập nhật location hiện có thay vì tạo mới
+
             if ($service->location_id) {
                 $location = Location::find($service->location_id);
                 if ($location) {
                     $location->update($locationData);
                 } else {
-                    // Nếu không tìm thấy location cũ, tạo mới
+
                     $location = Location::create($locationData);
                     $service->location()->associate($location);
                 }
             } else {
-                // Nếu service chưa có location, tạo mới
+
                 $location = Location::create($locationData);
                 $service->location()->associate($location);
             }
@@ -285,26 +281,25 @@ class ServiceController extends Controller
             $service->category()->associate($category);
             $service->save();
 
-            // Xử lý hình ảnh
-            // Nếu có kept_image_ids, chỉ giữ lại những hình ảnh có ID trong danh sách
+
             if ($request->has('kept_image_ids')) {
                 $keptIds = $request->input('kept_image_ids', []);
                 $currentImages = $service->image()->pluck('image_id')->toArray();
 
-                // Tìm các ID hình ảnh cần xóa (không có trong kept_image_ids)
+
                 $imagesToDetach = array_diff($currentImages, $keptIds);
 
-                // Xóa các hình ảnh không cần giữ lại
+
                 foreach ($imagesToDetach as $imageId) {
                     $service->image()->detach($imageId);
                 }
             } elseif ($request->has('remove_all_images') && $request->input('remove_all_images') == 1) {
-                // Nếu có tham số remove_all_images, xóa tất cả hình ảnh hiện tại
+
                 \Log::info('Xóa tất cả hình ảnh của dịch vụ #' . $service->id);
                 $service->image()->detach();
             }
 
-            // Thêm hình ảnh mới nếu có
+
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $imageFile) {
                     $path = $imageFile->store('services', 'public');
@@ -313,22 +308,22 @@ class ServiceController extends Controller
                 }
             }
 
-            // Load relations
+
             $service->load(array_merge(self::RELATION_TABLES, ['image']));
 
-            // Update single service cache
+
             $key = "service:{$id}";
             Redis::set($key, json_encode($service));
             Redis::expire($key, self::CACHE_TTL);
 
-            // Update first page cache since we updated a service
+
             $this->updateFirstPageCache();
 
             return Response::json($service);
         });
     }
 
-    public function delete(Request $request, string $id, ?bool $force): JsonResponse
+    public function delete(Request $request, string $id, ?int $force): JsonResponse
     {
         $service = Service::findOrFail($id);
 
@@ -338,12 +333,6 @@ class ServiceController extends Controller
             } else {
                 $service->delete();
             }
-
-            // Delete single service cache
-            Redis::del("service:{$id}");
-
-            // Update first page cache since we deleted a service
-            $this->updateFirstPageCache();
         });
 
         return Response::json(['message' => 'success']);
@@ -356,12 +345,12 @@ class ServiceController extends Controller
         DB::transaction(function () use ($service, $id) {
             $service->restore();
 
-            // Load relations and update single service cache
+
             $service->load(self::RELATION_TABLES);
             Redis::set("service:{$id}", json_encode($service));
             Redis::expire("service:{$id}", self::CACHE_TTL);
 
-            // Update first page cache since we restored a service
+
             $this->updateFirstPageCache();
         });
 
@@ -388,15 +377,12 @@ class ServiceController extends Controller
         return Response::json(['message' => 'success']);
     }
 
-    /**
-     * Thêm gói giá cho dịch vụ
-     */
     public function addServicePrice(Request $request, string $serviceId): JsonResponse
     {
         $user = auth()->guard()->user();
         $service = Service::findOrFail($serviceId);
 
-        // Kiểm tra quyền sở hữu
+
         if ($service->user_id !== $user->id) {
             return Response::json(['message' => 'Unauthorized'], 403);
         }
@@ -412,10 +398,10 @@ class ServiceController extends Controller
                 'price_value' => $validated['price_value']
             ]);
 
-            // Load relations
+
             $service->load(array_merge(self::RELATION_TABLES, ['image']));
 
-            // Update cache
+
             $key = "service:{$service->id}";
             Redis::set($key, json_encode($service));
             Redis::expire($key, self::CACHE_TTL);
@@ -424,15 +410,13 @@ class ServiceController extends Controller
         });
     }
 
-    /**
-     * Cập nhật gói giá cho dịch vụ
-     */
+
     public function updateServicePrice(Request $request, string $serviceId, string $priceId): JsonResponse
     {
         $user = auth()->guard()->user();
         $service = Service::findOrFail($serviceId);
 
-        // Kiểm tra quyền sở hữu
+
         if ($service->user_id !== $user->id) {
             return Response::json(['message' => 'Unauthorized'], 403);
         }
@@ -450,10 +434,10 @@ class ServiceController extends Controller
                 'price_value' => $validated['price_value']
             ]);
 
-            // Load relations
+
             $service->load(array_merge(self::RELATION_TABLES, ['image']));
 
-            // Update cache
+
             $key = "service:{$service->id}";
             Redis::set($key, json_encode($service));
             Redis::expire($key, self::CACHE_TTL);
@@ -470,7 +454,7 @@ class ServiceController extends Controller
         $user = auth()->guard()->user();
         $service = Service::findOrFail($serviceId);
 
-        // Kiểm tra quyền sở hữu
+
         if ($service->user_id !== $user->id) {
             return Response::json(['message' => 'Unauthorized'], 403);
         }
@@ -480,10 +464,10 @@ class ServiceController extends Controller
         return DB::transaction(function () use ($price, $service) {
             $price->delete();
 
-            // Load relations
+
             $service->load(array_merge(self::RELATION_TABLES, ['image']));
 
-            // Update cache
+
             $key = "service:{$service->id}";
             Redis::set($key, json_encode($service));
             Redis::expire($key, self::CACHE_TTL);
@@ -499,10 +483,10 @@ class ServiceController extends Controller
     {
         $user = auth()->guard()->user();
 
-        // Create a query to get services owned by the current user
+
         $query = Service::where('user_id', $user->id);
 
-        // Get counts by category
+
         $counts = $query->select('category_id', DB::raw('count(*) as count'))
             ->groupBy('category_id')
             ->get()
@@ -521,14 +505,14 @@ class ServiceController extends Controller
     public function getNearbyServices(Request $request): JsonResponse
     {
         $user = auth()->guard()->user();
-        $radius = $request->input('radius', 10); // Bán kính tìm kiếm mặc định 10km
-        $lat = $request->input('lat'); // Vĩ độ của người dùng
-        $lng = $request->input('lng'); // Kinh độ của người dùng
-        $provinceId = $request->input('province_id'); // ID tỉnh/thành phố của người dùng
+        $radius = $request->input('radius', 10);
+        $lat = $request->input('lat');
+        $lng = $request->input('lng');
+        $provinceId = $request->input('province_id');
         $perPage = $request->input('per_page', 15);
 
         if (!$lat || !$lng) {
-            // Nếu không có tọa độ, tìm theo tỉnh/thành
+
             if (!$provinceId) {
                 return Response::json([
                     'status' => 'error',
@@ -544,7 +528,7 @@ class ServiceController extends Controller
 
             $services = $query->paginate($perPage);
 
-            // Thêm thông tin is_liked cho mỗi dịch vụ
+
             $services->getCollection()->transform(function ($service) use ($user) {
                 $service->is_liked = $service->userFavorite->contains('id', $user->id);
                 return $service;
@@ -577,7 +561,7 @@ class ServiceController extends Controller
 
         $services = $query->paginate($perPage);
 
-        // Thêm thông tin is_liked cho mỗi dịch vụ
+
         $services->getCollection()->transform(function ($service) use ($user) {
             $service->is_liked = $service->userFavorite->contains('id', $user->id);
             return $service;

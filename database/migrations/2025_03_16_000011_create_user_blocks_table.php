@@ -19,11 +19,11 @@ return new class extends Migration {
             $table->text('reason')->nullable();
             $table->timestamps();
 
-            // Thêm foreign key constraints
+
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('blocked_user_id')->references('id')->on('users')->onDelete('cascade');
 
-            // Đảm bảo mỗi user chỉ có thể chặn một user khác một lần
+
             $table->unique(['user_id', 'blocked_user_id']);
         });
     }

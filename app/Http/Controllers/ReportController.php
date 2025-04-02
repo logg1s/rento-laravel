@@ -18,17 +18,17 @@ class ReportController extends Controller
     {
         $query = Report::with(['reporter', 'reportedUser']);
 
-        // Filter by status if provided
+
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
 
-        // Filter by entity_type if provided
+
         if ($request->has('entity_type')) {
             $query->where('entity_type', $request->entity_type);
         }
 
-        // Filter by reported user if provided
+
         if ($request->has('reported_user_id')) {
             $query->where('reported_user_id', $request->reported_user_id);
         }

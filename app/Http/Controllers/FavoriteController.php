@@ -29,7 +29,7 @@ class FavoriteController extends Controller
             ->orderBy('created_at', 'desc')->cursorPaginate(perPage: 5);
         return Response::json($favorites);
     }
-    // get list favorite: return only array of service_id: [...]
+
     public function getListFavorite(): JsonResponse
     {
         $user = Auth::user();

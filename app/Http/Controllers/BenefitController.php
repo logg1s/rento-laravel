@@ -48,18 +48,18 @@ class BenefitController extends Controller
         return DB::transaction(function () use ($validate, $request) {
             $benefit = Benefit::create($validate);
 
-            // Nếu có price_id, liên kết benefit với price
+
             if ($request->has('price_id')) {
                 $priceId = $request->price_id;
                 if (is_array($priceId)) {
-                    // Nếu là mảng, liên kết với nhiều price
+
                     foreach ($priceId as $id) {
                         if (Price::where('id', $id)->exists()) {
                             $benefit->price()->syncWithoutDetaching(Price::findOrFail($id));
                         }
                     }
                 } else {
-                    // Nếu là số, liên kết với một price
+
                     if (Price::where('id', $priceId)->exists()) {
                         $benefit->price()->syncWithoutDetaching(Price::findOrFail($priceId));
                     }
@@ -80,12 +80,12 @@ class BenefitController extends Controller
         $benefit = Benefit::findOrFail($id);
 
         return DB::transaction(function () use ($benefit, $validate, $request) {
-            // Cập nhật tên benefit nếu có
+
             if (isset($validate['benefit_name'])) {
                 $benefit->update(['benefit_name' => $validate['benefit_name']]);
             }
 
-            // Cập nhật liên kết price_id nếu có
+
             if ($request->has('price_id')) {
                 $benefit->price()->syncWithoutDetaching(Price::findOrFail($validate['price_id']));
             }
@@ -132,17 +132,15 @@ class BenefitController extends Controller
         });
     }
 
-    /**
-     * Lấy tất cả các lợi ích không thuộc về price nào
-     */
+
     public function getIndependent(Request $request, string $serviceId)
     {
         $service = Service::findOrFail($serviceId);
 
-        // Lấy tất cả benefits của service
+
         $allBenefits = $service->benefit()->with('price')->orderBy('created_at', 'desc')->get();
 
-        // Lọc ra các benefits không có liên kết với price nào
+
         $independentBenefits = $allBenefits->filter(function ($benefit) {
             return $benefit->price->isEmpty();
         });
@@ -154,17 +152,14 @@ class BenefitController extends Controller
     {
         return DB::transaction(function () use ($id) {
             $benefit = Benefit::findOrFail($id);
-            // Xóa tất cả các liên kết với price trước
+
             $benefit->price()->detach();
             $benefit->forceDelete();
             return Response::json(['message' => 'success']);
         });
     }
 
-    /**
-     * Thêm benefit và liên kết với nhiều prices trong một lần gọi
-     * Cải thiện hiệu suất khi có nhiều prices cần liên kết
-     */
+
     public function createWithPrices(Request $request): JsonResponse
     {
         $validate = $request->validate([
@@ -180,7 +175,7 @@ class BenefitController extends Controller
                 'service_id' => $validate['service_id']
             ]);
 
-            // Nếu có price_ids, liên kết benefit với prices trong một lần
+
             if (isset($validate['price_ids']) && count($validate['price_ids']) > 0) {
                 $benefit->price()->syncWithoutDetaching($validate['price_ids']);
             }
@@ -189,10 +184,7 @@ class BenefitController extends Controller
         });
     }
 
-    /**
-     * Cập nhật benefit và liên kết với nhiều prices trong một lần gọi
-     * Thay thế tất cả liên kết hiện tại bằng danh sách mới
-     */
+
     public function updateWithPrices(Request $request, string $id)
     {
         $validate = $request->validate([
@@ -204,11 +196,10 @@ class BenefitController extends Controller
         $benefit = Benefit::findOrFail($id);
 
         return DB::transaction(function () use ($benefit, $validate) {
-            // Cập nhật tên benefit
+
             $benefit->update(['benefit_name' => $validate['benefit_name']]);
 
-            // Đồng bộ lại toàn bộ liên kết với prices
-            // Nếu price_ids là null hoặc mảng rỗng, tất cả liên kết sẽ bị xóa
+
             if (isset($validate['price_ids'])) {
                 $benefit->price()->sync($validate['price_ids']);
             } else {

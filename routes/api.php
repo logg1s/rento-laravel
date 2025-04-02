@@ -129,7 +129,6 @@ Route::group([], function () {
 });
 
 Route::middleware(['auth:api'])->prefix('provider')->group(function () {
-    // Quản lý dịch vụ
     Route::controller(ServiceController::class)->prefix('services')->group(function () {
         Route::get('/my-services', 'getMyServices');
         Route::get('/category-counts', 'getCategoryCounts');
@@ -138,7 +137,6 @@ Route::middleware(['auth:api'])->prefix('provider')->group(function () {
         Route::put('/{id}', 'update');
         Route::delete('/{id}/{force?}', 'delete');
 
-        // Quản lý giá dịch vụ
         Route::post('/{serviceId}/prices', 'addServicePrice');
         Route::put('/{serviceId}/prices/{priceId}', 'updateServicePrice');
         Route::delete('/{serviceId}/prices/{priceId}', 'deleteServicePrice');
@@ -154,12 +152,12 @@ Route::middleware(['auth:api'])->prefix('provider')->group(function () {
         Route::get('/{id}', 'getCommentsByServiceId');
     });
 
-    // Thống kê
+
     Route::controller(ProviderStatisticController::class)->prefix('statistics')->group(function () {
         Route::get('/', 'getStatistics');
     });
 
-    // Quản lý location
+
     Route::controller(LocationController::class)->prefix('locations')->group(function ($router) {
         Route::get('/', 'index');
         Route::post('/', 'store');
@@ -168,7 +166,7 @@ Route::middleware(['auth:api'])->prefix('provider')->group(function () {
         Route::delete('/{id}', 'destroy');
     });
 
-    // Route cho benefits
+
     Route::controller(BenefitController::class)->prefix('benefits')->group(function () {
         Route::post('/create-with-prices', 'createWithPrices');
         Route::put('/{id}/update-with-prices', 'updateWithPrices');
@@ -177,7 +175,7 @@ Route::middleware(['auth:api'])->prefix('provider')->group(function () {
         Route::delete('/{id}', 'delete');
     });
 
-    // Route cho prices
+
     Route::controller(PriceController::class)->prefix('prices')->group(function () {
         Route::post('/create-with-benefits', 'createWithBenefits');
         Route::put('/{id}/update-with-benefits', 'updateWithBenefits');
@@ -188,7 +186,7 @@ Route::middleware(['auth:api'])->prefix('provider')->group(function () {
 
 });
 
-// Report routes
+
 Route::post('/reports', 'App\Http\Controllers\ReportController@store');
 Route::get('/reports', 'App\Http\Controllers\ReportController@index');
 Route::get('/reports/{id}', 'App\Http\Controllers\ReportController@show');

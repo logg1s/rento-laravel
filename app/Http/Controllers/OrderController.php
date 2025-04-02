@@ -134,13 +134,13 @@ class OrderController extends Controller
             'endDate' => $endDate
         ]);
 
-        // Truy vấn cơ bản
+
         $query = Order::with(['service', 'user', 'price'])
             ->whereHas('service', function ($query) use ($providerId) {
                 $query->where('user_id', $providerId);
             });
 
-        // Lọc theo trạng thái nếu có
+
         if ($status !== 'all') {
             $statusMapping = [
                 'pending' => 1,
@@ -155,7 +155,7 @@ class OrderController extends Controller
             }
         }
 
-        // Thêm tìm kiếm dựa trên searchFilter
+
         if ($searchQuery) {
             switch ($searchFilter) {
                 case 'service':
@@ -199,7 +199,7 @@ class OrderController extends Controller
             }
         }
 
-        // Lọc theo khoảng thời gian
+
         if ($startDate) {
             $query->whereDate('created_at', '>=', $startDate);
         }
@@ -207,7 +207,7 @@ class OrderController extends Controller
             $query->whereDate('created_at', '<=', $endDate);
         }
 
-        // Sắp xếp
+
         switch ($sortBy) {
             case 'oldest':
                 $query->orderBy('created_at', 'asc');
@@ -224,7 +224,7 @@ class OrderController extends Controller
                 break;
         }
 
-        // Lấy tổng số đơn hàng cho từng trạng thái (không bị ảnh hưởng bởi phân trang)
+
         $baseCountQuery = (clone $query);
         if ($searchQuery || $startDate || $endDate) {
             $totalCounts = [
@@ -235,7 +235,7 @@ class OrderController extends Controller
                 'cancelled' => (clone $baseCountQuery)->where('status', 0)->count(),
             ];
         } else {
-            // If no filters, use simpler counting query
+
             $totalCounts = [
                 'total' => Order::whereHas('service', function ($q) use ($providerId) {
                     $q->where('user_id', $providerId);
@@ -256,16 +256,16 @@ class OrderController extends Controller
         }
 
         try {
-            // Sử dụng phân trang cursor tích hợp của Laravel
+
             $orders = $query->cursorPaginate($limit);
 
-            // Thêm quan hệ cần thiết
+
             $orders->through(function ($order) {
                 $order->load(['service.category', 'service.user', 'price.benefit']);
                 return $order;
             });
 
-            // Trả về kết quả phân trang với con trỏ tiếp theo và tổng số đơn hàng
+
             return Response::json([
                 'data' => $orders->items(),
                 'next_cursor' => $orders->nextCursor() ? $orders->nextCursor()->encode() : null,
@@ -286,7 +286,7 @@ class OrderController extends Controller
 
         $order = Order::findOrFail($id);
 
-        // Kiểm tra xem order có thuộc về service của provider này không
+
         if ($order->service->user_id !== auth()->id()) {
             return Response::json(['message' => 'Unauthorized'], 403);
         }

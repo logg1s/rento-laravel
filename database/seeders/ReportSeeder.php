@@ -15,17 +15,15 @@ class ReportSeeder extends Seeder
      */
     public function run(): void
     {
-        // Lấy danh sách user thông thường
+
         $users = User::whereHas('role', function ($query) {
             $query->where('id', 'user');
         })->get();
 
-        // Lấy danh sách nhà cung cấp
         $providers = User::whereHas('role', function ($query) {
             $query->where('id', 'provider');
         })->get();
 
-        // Các lý do báo cáo
         $reportReasons = [
             'Dịch vụ không đúng mô tả',
             'Nhà cung cấp không chuyên nghiệp',
@@ -39,7 +37,6 @@ class ReportSeeder extends Seeder
             'Dịch vụ đã ngừng hoạt động',
         ];
 
-        // Các loại entity có thể báo cáo
         $entityTypes = [
             'service',
             'user',
@@ -47,21 +44,16 @@ class ReportSeeder extends Seeder
             'comment',
         ];
 
-        // Tạo 20 báo cáo mẫu
         for ($i = 0; $i < 20; $i++) {
-            // Chọn ngẫu nhiên user báo cáo
             $reporter = $users->random();
 
-            // Chọn ngẫu nhiên một nhà cung cấp bị báo cáo
+
             $reportedUser = $providers->random();
 
-            // Chọn ngẫu nhiên loại entity được báo cáo
             $entityType = $entityTypes[array_rand($entityTypes)];
 
-            // Khởi tạo entity_id
             $entityId = null;
 
-            // Tùy thuộc vào loại entity, lấy một ID hợp lệ
             switch ($entityType) {
                 case 'service':
                     $service = Service::inRandomOrder()->first();
@@ -72,21 +64,16 @@ class ReportSeeder extends Seeder
                     break;
                 case 'message':
                 case 'comment':
-                    // Đặt một ID giả cho message và comment
                     $entityId = rand(1, 100);
                     break;
             }
 
-            // Chọn ngẫu nhiên một lý do báo cáo
             $reason = $reportReasons[array_rand($reportReasons)];
 
-            // Tạo ngẫu nhiên trạng thái báo cáo
             $status = ['pending', 'reviewed', 'rejected', 'resolved'][rand(0, 3)];
 
-            // Tạo ngẫu nhiên thời gian tạo báo cáo trong 60 ngày gần đây
             $createdAt = Carbon::now()->subDays(rand(1, 60));
 
-            // Tạo báo cáo
             Report::create([
                 'reporter_id' => $reporter->id,
                 'reported_user_id' => $reportedUser->id,

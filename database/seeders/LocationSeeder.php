@@ -13,10 +13,9 @@ class LocationSeeder extends Seeder
      */
     public function run(): void
     {
-        // Lấy các province đã được tạo từ ProvinceSeeder
+
         $provinces = Province::all();
 
-        // Tạo các địa điểm ở Hà Nội
         $hanoi = $provinces->where('code', 'HN')->first();
         $locations = [
             [
@@ -45,7 +44,7 @@ class LocationSeeder extends Seeder
             ],
         ];
 
-        // Tạo các địa điểm ở TP HCM
+
         $hcm = $provinces->where('code', 'HCM')->first();
         $locations = array_merge($locations, [
             [
@@ -74,7 +73,7 @@ class LocationSeeder extends Seeder
             ],
         ]);
 
-        // Tạo các địa điểm ở Đà Nẵng
+
         $danang = $provinces->where('code', 'DN')->first();
         $locations = array_merge($locations, [
             [
@@ -95,7 +94,7 @@ class LocationSeeder extends Seeder
             ],
         ]);
 
-        // Tạo các địa điểm ở Cần Thơ
+
         $cantho = $provinces->where('code', 'CT')->first();
         $locations = array_merge($locations, [
             [
@@ -116,7 +115,7 @@ class LocationSeeder extends Seeder
             ],
         ]);
 
-        // Tạo các địa điểm ở Hải Phòng
+
         $haiphong = $provinces->where('code', 'HP')->first();
         $locations = array_merge($locations, [
             [
@@ -137,7 +136,7 @@ class LocationSeeder extends Seeder
             ],
         ]);
 
-        // Lưu tất cả các địa điểm vào database
+
         foreach ($locations as $locationData) {
             Location::create($locationData);
         }

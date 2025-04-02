@@ -15,7 +15,7 @@ class ServiceSeeder extends Seeder
      */
     public function run(): void
     {
-        // Lấy danh sách các danh mục
+
         $categories = Category::all();
         $dọnDẹp = $categories->where('category_name', 'Dọn dẹp')->first();
         $sửaChữa = $categories->where('category_name', 'Sửa chữa')->first();
@@ -24,15 +24,15 @@ class ServiceSeeder extends Seeder
         $muaBán = $categories->where('category_name', 'Mua bán')->first();
         $khác = $categories->where('category_name', 'Khác')->first();
 
-        // Lấy danh sách các địa điểm
+
         $locations = Location::all();
 
-        // Lấy các provider
+
         $providers = User::whereHas('role', function ($query) {
             $query->where('id', 'provider');
         })->get();
 
-        // Dịch vụ dọn dẹp
+
         $services[] = [
             'service_name' => 'Dọn dẹp nhà cửa',
             'service_description' => 'Dịch vụ dọn dẹp nhà cửa toàn diện, sạch sẽ, an toàn',
@@ -57,7 +57,6 @@ class ServiceSeeder extends Seeder
             'location_id' => $locations[2]->id,
         ];
 
-        // Dịch vụ sửa chữa
         $services[] = [
             'service_name' => 'Sửa chữa điện nước',
             'service_description' => 'Dịch vụ sửa chữa điện nước tại nhà, nhanh chóng, uy tín',
@@ -82,7 +81,6 @@ class ServiceSeeder extends Seeder
             'location_id' => $locations[5]->id,
         ];
 
-        // Dịch vụ nấu ăn
         $services[] = [
             'service_name' => 'Nấu ăn gia đình',
             'service_description' => 'Dịch vụ nấu ăn tại gia đình với các món ăn truyền thống Việt Nam',
@@ -107,7 +105,6 @@ class ServiceSeeder extends Seeder
             'location_id' => $locations[8]->id,
         ];
 
-        // Dịch vụ gia sư
         $services[] = [
             'service_name' => 'Gia sư Toán',
             'service_description' => 'Gia sư dạy Toán cho học sinh cấp 1, 2, 3 và ôn thi đại học',
@@ -132,7 +129,6 @@ class ServiceSeeder extends Seeder
             'location_id' => $locations[1]->id,
         ];
 
-        // Dịch vụ mua bán
         $services[] = [
             'service_name' => 'Bán đồ nội thất cũ',
             'service_description' => 'Chuyên mua bán các đồ nội thất đã qua sử dụng còn tốt, giá rẻ',
@@ -157,7 +153,6 @@ class ServiceSeeder extends Seeder
             'location_id' => $locations[4]->id,
         ];
 
-        // Dịch vụ khác
         $services[] = [
             'service_name' => 'Dịch vụ trông trẻ',
             'service_description' => 'Trông giữ trẻ theo giờ, theo ngày, có kinh nghiệm và yêu trẻ',
@@ -190,7 +185,7 @@ class ServiceSeeder extends Seeder
             'location_id' => $locations[8]->id,
         ];
 
-        // Lưu dịch vụ vào database
+
         foreach ($services as $serviceData) {
             Service::create($serviceData);
         }

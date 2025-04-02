@@ -15,7 +15,7 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Tạo admin
+
         $admin = User::create([
             'name' => 'Admin',
             'email' => 'admin@example.com',
@@ -27,7 +27,7 @@ class UserSeeder extends Seeder
         ]);
         $admin->role()->attach(['admin']);
 
-        // Tạo 7 user thông thường
+
         for ($i = 1; $i <= 7; $i++) {
             $user = User::create([
                 'name' => 'Người dùng ' . $i,
@@ -41,7 +41,7 @@ class UserSeeder extends Seeder
             $user->role()->attach(['user']);
         }
 
-        // Tạo 7 provider
+
         for ($i = 1; $i <= 7; $i++) {
             $provider = User::create([
                 'name' => 'Nhà cung cấp ' . $i,

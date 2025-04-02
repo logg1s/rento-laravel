@@ -13,11 +13,11 @@ class UserSettingSeeder extends Seeder
      */
     public function run(): void
     {
-        // Lấy tất cả users
+
         $users = User::all();
 
         foreach ($users as $user) {
-            // Tạo cài đặt với giá trị ngẫu nhiên
+
             UserSetting::create([
                 'user_id' => $user->id,
                 'is_notification' => rand(0, 1),

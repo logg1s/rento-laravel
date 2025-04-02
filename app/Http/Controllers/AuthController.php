@@ -78,9 +78,9 @@ class AuthController extends Controller
             $user->channelNotification()->attach($role->id);
             $user->userSetting()->create(['is_notification' => true]);
 
-            // Lưu địa chỉ thật từ geolocation nếu có
+
             if (isset($validated["real_address"]) || isset($validated["lat"]) || isset($validated["lng"])) {
-                // Tạo location cho user
+
                 $locationData = [];
 
                 if (isset($validated["address"])) {
@@ -100,12 +100,12 @@ class AuthController extends Controller
                 }
 
                 if (!empty($locationData)) {
-                    // Lưu location mới
+
                     \App\Models\Location::create($locationData);
                 }
             }
 
-            // Gửi mã xác thực sau khi đăng ký
+
             $this->sendVerificationCode($user->email);
 
             $token = auth()->guard()->login($user);
@@ -190,7 +190,7 @@ class AuthController extends Controller
             ]
         );
 
-        // Gửi email trong background
+
         SendVerificationEmail::dispatch($email, $code);
     }
 
@@ -217,7 +217,7 @@ class AuthController extends Controller
 
         $verification->delete();
 
-        // Cập nhật trạng thái người dùng nếu đang ở trạng thái PENDING
+
         $user = User::where('email', $validated['email'])->first();
         if ($user && $user->status === UserStatusEnum::PENDING->value) {
             $user->status = UserStatusEnum::ACTIVE->value;
@@ -238,7 +238,7 @@ class AuthController extends Controller
             'email' => ['required', 'email', 'max:100'],
         ]);
 
-        // Kiểm tra xem email có tồn tại trong hệ thống không
+
         $user = User::where('email', $validated['email'])->first();
         if (!$user) {
             return Response::json([
@@ -246,7 +246,7 @@ class AuthController extends Controller
             ], 400);
         }
 
-        // Kiểm tra trạng thái user
+
 
         if ($user->status != UserStatusEnum::PENDING->value) {
             return Response::json([
@@ -254,7 +254,7 @@ class AuthController extends Controller
             ], 400);
         }
 
-        // Kiểm tra thời gian gửi lại mã
+
         $lastVerification = EmailVerification::where('email', $validated['email'])
             ->where('created_at', '>', now()->subMinutes(self::RESEND_OTP_DELAY_MINUTES))
             ->first();
@@ -266,7 +266,7 @@ class AuthController extends Controller
             ], 429);
         }
 
-        // Gửi mã mới
+
         $this->sendVerificationCode($validated['email']);
 
         return Response::json([
@@ -274,16 +274,14 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Gửi yêu cầu quên mật khẩu
-     */
+
     public function forgotPassword(Request $request): JsonResponse
     {
         $validated = $request->validate([
             "email" => ["required", "email", "max:100"],
         ]);
 
-        // Kiểm tra email có tồn tại và là tài khoản thường
+
         $user = User::where('email', $validated['email'])
             ->where("is_oauth", false)
             ->where("status", UserStatusEnum::ACTIVE->value)
@@ -295,7 +293,7 @@ class AuthController extends Controller
             ], 400);
         }
 
-        // Gửi mã OTP
+
         $this->sendVerificationCode($validated['email']);
 
         return Response::json([
@@ -303,9 +301,7 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Xác thực OTP và đặt lại mật khẩu
-     */
+
     public function verifyForgotPassword(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -314,7 +310,7 @@ class AuthController extends Controller
             "new_password" => ["required", "max:50", Password::min(8)],
         ]);
 
-        // Kiểm tra email có tồn tại và là tài khoản thường
+
         $user = User::where('email', $validated['email'])
             ->where("is_oauth", false)
             ->where("status", UserStatusEnum::ACTIVE->value)
@@ -326,7 +322,7 @@ class AuthController extends Controller
             ], 400);
         }
 
-        // Xác thực mã OTP
+
         $verification = EmailVerification::where('email', $validated['email'])
             ->where("code", $validated["code"])
             ->where("expires_at", ">", now())

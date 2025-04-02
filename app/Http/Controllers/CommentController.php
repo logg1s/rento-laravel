@@ -66,7 +66,7 @@ class CommentController extends Controller
     {
         $user = auth()->user();
 
-        // Validate input
+
         $validated = $request->validate([
             'rate' => ['integer', 'between:1,5'],
             'comment_body' => ['required', 'string', 'min:1'],

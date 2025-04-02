@@ -14,18 +14,18 @@ return new class extends Migration {
             $table->id();
             $table->unsignedBigInteger('reporter_id');
             $table->unsignedBigInteger('reported_user_id');
-            $table->string('entity_type'); // 'message', 'user', 'service', etc.
-            $table->string('entity_id');   // ID của entity được báo cáo
-            $table->text('reason');        // Lý do báo cáo
+            $table->string('entity_type');
+            $table->string('entity_id');
+            $table->text('reason');
             $table->enum('status', ['pending', 'reviewed', 'rejected', 'resolved'])->default('pending');
-            $table->text('admin_notes')->nullable(); // Ghi chú của admin khi xem xét báo cáo
+            $table->text('admin_notes')->nullable();
             $table->timestamps();
 
-            // Index để tìm kiếm nhanh
+
             $table->index(['entity_type', 'entity_id']);
             $table->index('status');
 
-            // Thêm foreign key constraints sau khi tạo bảng
+
             $table->foreign('reporter_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('reported_user_id')->references('id')->on('users')->onDelete('cascade');
         });

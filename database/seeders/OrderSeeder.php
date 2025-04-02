@@ -17,26 +17,25 @@ class OrderSeeder extends Seeder
      */
     public function run(): void
     {
-        // Lấy danh sách users (khách hàng)
+
         $users = User::whereHas('role', function ($query) {
             $query->where('id', 'user');
         })->get();
 
-        // Lấy danh sách dịch vụ
         $services = Service::all();
 
-        // Tạo 30 đơn hàng mẫu
+
         for ($i = 0; $i < 30; $i++) {
-            // Chọn ngẫu nhiên một user
+
             $user = $users->random();
 
-            // Chọn ngẫu nhiên một service
+
             $service = $services->random();
 
-            // Chọn ngẫu nhiên một price của service đó
+
             $price = Price::where('service_id', $service->id)->inRandomOrder()->first();
 
-            // Xác định trạng thái đơn hàng
+
             $statusRandom = rand(1, 100);
             if ($statusRandom <= 20) {
                 $status = StatusEnum::PENDING;
@@ -53,11 +52,9 @@ class OrderSeeder extends Seeder
             } elseif ($statusRandom <= 100) {
                 $status = StatusEnum::CANCELLED;
                 $timeStart = null;
-                // Đơn bị hủy bởi khách hàng hoặc nhà cung cấp
                 $cancelBy = rand(0, 1) ? $user->id : $service->user_id;
             }
 
-            // Tạo đơn hàng
             Order::create([
                 'user_id' => $user->id,
                 'service_id' => $service->id,

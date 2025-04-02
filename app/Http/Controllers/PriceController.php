@@ -91,7 +91,7 @@ class PriceController extends Controller
             $price->service()->associate($service);
             $price->save();
 
-            // Liên kết price với benefits nếu có
+
             if (isset($validate['benefit_ids']) && count($validate['benefit_ids']) > 0) {
                 $price->benefit()->syncWithoutDetaching($validate['benefit_ids']);
             }
@@ -119,7 +119,7 @@ class PriceController extends Controller
             $price->price_value = $validate['price_value'];
             $price->save();
 
-            // Đồng bộ lại toàn bộ liên kết với benefits
+
             if (isset($validate['benefit_ids'])) {
                 $price->benefit()->sync($validate['benefit_ids']);
             }
