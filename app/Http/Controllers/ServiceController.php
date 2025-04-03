@@ -520,11 +520,12 @@ class ServiceController extends Controller
                 ], 400);
             }
 
+            // order by average rate 
             $query = Service::with(array_merge(self::RELATION_TABLES, ['image']))
                 ->whereHas('location', function ($query) use ($provinceId) {
                     $query->where('province_id', $provinceId);
                 })
-                ->orderBy('id', 'desc');
+                ->orderBy('comment_count', 'desc');
 
             $services = $query->paginate($perPage);
 

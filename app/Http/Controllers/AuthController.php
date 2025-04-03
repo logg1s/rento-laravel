@@ -175,9 +175,6 @@ class AuthController extends Controller
         return $this->respondWithToken($token);
     }
 
-    /**
-     * Gửi mã xác thực đến email
-     */
     public function sendVerificationCode(string $email)
     {
         $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
