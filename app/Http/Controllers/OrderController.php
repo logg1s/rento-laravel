@@ -44,30 +44,48 @@ class OrderController extends Controller
         Notification::sendToUser($service->user->id, $title, $body, $data, true);
     }
 
-    public function sendUpdateOrderMessage(Service $service, User $user, int $status)
+    public static function sendUpdateOrderMessageToUser(Service $service, User $user, int $status)
+    {
+        $title = '';
+        $body = '';
+        $data = ['tag' => 'order'];
+        switch ($status) {
+            // case 1:
+            //     $title = '⏳ Đơn dịch vụ đang trong trạng thái chờ';
+            //     $body = 'Dịch vụ ' . $service->service_name . 'đang chờ nhà cung cấp xét duyệt';
+            //     break;
+            case 2:
+                $title = 'Dịch vụ đang được thực hiện';
+                $body = 'Đơn dịch vụ ' . $service->service_name . ' đang được thực hiện';
+                break;
+            case 3:
+                $title = '✅ Đơn dịch vụ ' . $service->service_name . ' đã hoàn tất';
+                $body = 'Nhà cung cấp ' . $service->user->name . ' đã hoàn tất đơn dịch vụ ' . $service->service_name;
+                break;
+            default:
+                $title = '❌ Đơn dịch vụ ' . $service->service_name . ' đã bị hủy';
+                $body = 'Nhà cung cấp ' . $service->user->name . ' đã hủy đơn dịch vụ ' . $service->service_name;
+                break;
+        }
+        Notification::sendToUser($user->id, $title, $body, $data, true);
+    }
+
+    public static function sendUpdateOrderMessageToProvider(Service $service, User $user, int $status)
     {
         $title = '';
         $body = '';
         $data = ['tag' => 'order'];
         switch ($status) {
             case 1:
-                $title = '⏳ Đơn dịch vụ đang trong trạng thái chờ';
-                $body = 'Dịch vụ ' . $service->service_name . 'đang chờ nhà cung cấp xét duyệt';
+                $title = '⏳ Bạn có đơn dịch vụ mới';
+                $body = 'Người dùng ' . $user->name . ' đã đặt đơn dịch vụ ' . $service->service_name;
                 break;
-            case 2:
-                $title = 'Dịch vụ đang thực hiện công việc';
-                $body = 'Dịch vụ ' . $service->service_name . ' đang được thực hiện';
-                break;
-            case 3:
-                $title = '✅ Dịch vụ hoàn tất';
-                $body = 'Dịch vụ ' . $service->service_name . ' đã hoàn thành';
-                break;
-            default:
-                $title = '❌ Dịch vụ đã được hủy';
-                $body = $service->service_name . ' đã được hủy';
+            case 0:
+                $title = '❌ Đơn dịch vụ ' . $service->service_name . ' đã bị hủy';
+                $body = 'Người dùng ' . $user->name . ' đã hủy đơn dịch vụ ' . $service->service_name;
                 break;
         }
-        Notification::sendToUser($user->id, $title, $body, $data, true);
+        Notification::sendToUser($service->user->id, $title, $body, $data, true);
     }
 
     public function create(Request $request): JsonResponse
@@ -104,7 +122,7 @@ class OrderController extends Controller
             $order->update([
                 $validate
             ]);
-            $this->sendUpdateOrderMessage($order->service, $order->user, $validate['status']);
+            self::sendUpdateOrderMessageToUser($order->service, $order->user, $validate['status']);
             return Response::json($order->load(self::RELATION_TABLES));
         });
     }
@@ -300,6 +318,8 @@ class OrderController extends Controller
 
         $order->status = $statusMapping[$request->status];
         $order->save();
+
+        self::sendUpdateOrderMessageToUser($order->service, $order->user, $order->status);
 
         return Response::json($order->load(['service', 'user', 'price']));
     }
