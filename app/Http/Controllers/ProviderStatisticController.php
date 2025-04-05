@@ -686,8 +686,10 @@ class ProviderStatisticController extends Controller
     {
         $now = Carbon::now();
 
-
         switch ($period) {
+            case 'today':
+                $startDate = $now->copy()->subDays(1)->startOfDay();
+                break;
             case 'week':
                 $startDate = $now->copy()->subDays(6)->startOfDay(); // Last 7 days
                 break;

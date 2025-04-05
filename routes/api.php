@@ -69,13 +69,14 @@ Route::group([], function () {
 
     Route::controller(NotificationController::class)->prefix('notifications')->group(function ($router) {
         Route::get('/', 'getAll');
-        Route::get('/{id}', 'getById');
+        // Route::get('/{id}', 'getById');
+        Route::get('/unread-count', 'getUnreadCount');
         Route::post('/', 'create');
         Route::post('/chat/{id}', 'chatNotification');
         Route::put('/read/all', 'readedAll');
         Route::put('/readed/{id}', 'readedById');
-        Route::put('/{id}', 'update');
-        Route::delete('/{id}', 'delete');
+        Route::put('/update/{id}', 'update');
+        Route::delete('/delete/{id}', 'delete');
         Route::post('/token/register', 'registerToken');
         Route::delete('/token/delete', 'deleteToken');
     });

@@ -101,4 +101,11 @@ class NotificationController extends Controller
         $notification->update(['is_read' => 1]);
         return Response::json(['message' => 'sucesss']);
     }
+
+    public function getUnreadCount(Request $request): JsonResponse
+    {
+        $user = auth()->guard()->user();
+        $unReadNotificationsCount = $user->notification()->where('is_read', false)->count();
+        return Response::json(['unReadNotificationsCount' => $unReadNotificationsCount]);
+    }
 }

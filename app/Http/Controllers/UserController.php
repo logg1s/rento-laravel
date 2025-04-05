@@ -27,16 +27,12 @@ class UserController extends Controller
         $this->middleware('check.status');
     }
     const LOAD_RELATION = [
-        'notification',
         'channelNotification'
     ];
     public function me()
     {
-        return Response::json(auth()->guard()->user()->load(array_merge(self::LOAD_RELATION, [
-            "viewedServiceLog" => function ($query) {
-                $query->orderBy("id", "desc")->limit(10);
-            },
-        ])));
+        $data = auth()->user()->load(array_merge(self::LOAD_RELATION));
+        return Response::json($data);
     }
 
     public function changeSetting(Request $request): JsonResponse
