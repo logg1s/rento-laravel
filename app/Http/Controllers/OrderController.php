@@ -33,7 +33,7 @@ class OrderController extends Controller
 
     public function getById(Request $request, string $id): JsonResponse
     {
-        return Response::json(Order::findOrFail($id)->load(self::RELATION_TABLES));
+        return Response::json(Order::findOrFail($id)->load(['service', 'price', 'cancelBy']));
     }
 
     public function sendNewOrderMessage(Service $service, User $user)
