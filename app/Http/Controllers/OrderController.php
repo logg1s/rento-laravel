@@ -36,20 +36,20 @@ class OrderController extends Controller
         return Response::json(Order::findOrFail($id)->load(['service', 'price', 'cancelBy']));
     }
 
-    public function sendNewOrderMessage(Service $service, User $user)
-    {
-        $title = 'Bạn có đơn dịch vụ mới';
-        $body = 'Đơn dịch vụ ' . $service->service_name . ' của người dùng ' . $user->name;
-        $data = ['type' => 'order'];
-        Notification::sendToUser($service->user->id, $title, $body, $data, true);
-    }
+    // public function sendNewOrderMessage(Service $service, User $user)
+    // {
+    //     $title = 'Bạn có đơn dịch vụ mới';
+    //     $body = 'Đơn dịch vụ ' . $service->service_name . ' của người dùng ' . $user->name;
+    //     $data = ['type' => 'order'];
+    //     Notification::sendToUser($service->user->id, $title, $body, $data, true);
+    // }
 
-    public static function sendUpdateOrderMessageToUser(Service $service, User $user, int $status)
+    public static function sendUpdateOrderMessageToUser(Service $service, User $user, Order $order)
     {
         $title = '';
         $body = '';
-        $data = ['tag' => 'order'];
-        switch ($status) {
+        $data = ['type' => 'order', 'id' => $order->id];
+        switch ($order->status) {
             // case 1:
             //     $title = '⏳ Đơn dịch vụ đang trong trạng thái chờ';
             //     $body = 'Dịch vụ ' . $service->service_name . 'đang chờ nhà cung cấp xét duyệt';
@@ -70,12 +70,12 @@ class OrderController extends Controller
         Notification::sendToUser($user->id, $title, $body, $data, true);
     }
 
-    public static function sendUpdateOrderMessageToProvider(Service $service, User $user, int $status)
+    public static function sendUpdateOrderMessageToProvider(Service $service, User $user, Order $order)
     {
         $title = '';
         $body = '';
-        $data = ['tag' => 'order'];
-        switch ($status) {
+        $data = ['type' => 'order', 'id' => $order->id];
+        switch ($order->status) {
             case 1:
                 $title = '⏳ Bạn có đơn dịch vụ mới';
                 $body = 'Người dùng ' . $user->name . ' đã đặt đơn dịch vụ ' . $service->service_name;
@@ -103,9 +103,9 @@ class OrderController extends Controller
         $service = Service::findOrFail($validate['service_id']);
         return DB::transaction(function () use ($user, $validate, $service) {
             $order = Order::create(
-                array_merge(['user_id' => $user->id], $validate),
+                array_merge(['user_id' => $user->id], $validate, ['status' => 1])
             );
-            $this->sendNewOrderMessage($service, $user);
+            self::sendUpdateOrderMessageToProvider($service, $user, $order);
             return Response::json($order->load(self::RELATION_TABLES));
         });
     }
@@ -122,7 +122,7 @@ class OrderController extends Controller
             $order->update([
                 $validate
             ]);
-            self::sendUpdateOrderMessageToUser($order->service, $order->user, $validate['status']);
+            self::sendUpdateOrderMessageToUser($order->service, $order->user, $order);
             return Response::json($order->load(self::RELATION_TABLES));
         });
     }
@@ -319,7 +319,7 @@ class OrderController extends Controller
         $order->status = $statusMapping[$request->status];
         $order->save();
 
-        self::sendUpdateOrderMessageToUser($order->service, $order->user, $order->status);
+        self::sendUpdateOrderMessageToUser($order->service, $order->user, $order);
 
         return Response::json($order->load(['service', 'user', 'price']));
     }

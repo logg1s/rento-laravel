@@ -80,7 +80,7 @@ class UserController extends Controller
             'cancel_by' => $validate['status'] == StatusEnum::CANCELLED->value ? auth()->guard()->user()->id : null,
         ]);
 
-        OrderController::sendUpdateOrderMessageToProvider($order->service, $order->user, $validate['status']);
+        OrderController::sendUpdateOrderMessageToProvider($order->service, $order->user, $order);
         return Response::json(['message' => 'Order updated successfully', 'order' => $order]);
     }
 

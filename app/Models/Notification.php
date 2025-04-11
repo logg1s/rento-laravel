@@ -57,8 +57,9 @@ class Notification extends Model
         $response = (new Expo)->send([$message])->to($user->expo_token)->push();
 
         if ($isSaveToDB) {
-            $user->notification()->create(['title' => $title, 'body' => $body, json_encode($data)]);
+            $user->notification()->create(['title' => $title, 'body' => $body, 'data' => json_encode($data)]);
         }
+
 
         return $response->getData();
     }
