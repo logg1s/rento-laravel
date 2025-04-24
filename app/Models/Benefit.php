@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Price> $price
  * @property-read int|null $price_count
+ * @property-read mixed $price_id
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Service> $service
  * @property-read int|null $service_count
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Benefit newModelQuery()
@@ -28,14 +29,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Benefit whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Benefit whereServiceId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Benefit whereUpdatedAt($value)
- * @property-read mixed $price_id
  * @mixin \Eloquent
  */
 class Benefit extends Model
 {
     protected $fillable = ['benefit_name', 'service_id'];
     protected $appends = ['price_id'];
-
+    protected $hidden = ['pivot'];
     public function priceId(): Attribute
     {
         return new Attribute(get: function () {

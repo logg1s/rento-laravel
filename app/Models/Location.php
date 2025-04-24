@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -12,6 +13,9 @@ use Illuminate\Database\Eloquent\Model;
  * @property float|null $lng
  * @property float|null $lat
  * @property string $location_name
+ * @property string|null $real_location_name
+ * @property int|null $province_id
+ * @property string|null $address
  * @property string|null $deleted_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
@@ -19,6 +23,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property-read int|null $order_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Service> $service
  * @property-read int|null $service_count
+ * @property-read \App\Models\Province|null $province
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Location newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Location newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Location query()
@@ -29,12 +34,16 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Location whereLng($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Location whereLocationName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Location whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Location whereAddress($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Location whereProvinceId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Location whereRealLocationName($value)
  * @mixin \Eloquent
  */
 class Location extends Model
 {
-    public $fillable = ['location_name'];
-
+    public $fillable = ['location_name', 'lng', 'lat', 'real_location_name', 'province_id', 'address'];
+    public $with = ['province'];
+    protected $hidden = ['pivot'];
     public function service(): HasMany
     {
         return $this->hasMany(Service::class);
@@ -43,5 +52,10 @@ class Location extends Model
     public function order(): HasMany
     {
         return $this->hasMany(Order::class);
+    }
+
+    public function province(): BelongsTo
+    {
+        return $this->belongsTo(Province::class);
     }
 }

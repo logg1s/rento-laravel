@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int $id
  * @property string $category_name
  * @property int|null $image_id
- * @property string|null $deleted_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Image> $image
@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read int|null $service_count
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Category newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Category newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Category onlyTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Category query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Category whereCategoryName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Category whereCreatedAt($value)
@@ -29,7 +30,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Category whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Category whereImageId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Category whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Category onlyTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Category withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Category withoutTrashed()
  * @mixin \Eloquent
@@ -37,7 +37,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Category extends Model
 {
     use SoftDeletes;
-    public function service() : HasMany
+    protected $hidden = ['pivot'];
+    public function service(): HasMany
     {
         return $this->hasMany(Service::class);
     }

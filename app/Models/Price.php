@@ -22,8 +22,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read int|null $benefit_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Order> $order
  * @property-read int|null $order_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Service> $service
- * @property-read int|null $service_count
+ * @property-read \App\Models\Service $service
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Price newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Price newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Price query()
@@ -39,7 +38,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Price extends Model
 {
     public $fillable = ['price_name', 'price_value'];
-
+    protected $hidden = ['pivot'];
     public function service(): BelongsTo
     {
         return $this->belongsTo(Service::class);

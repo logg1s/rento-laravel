@@ -61,9 +61,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Service extends Model
 {
     use SoftDeletes;
-
+    protected $hidden = ['pivot'];
     protected $appends = ['comment_count', 'average_rate', 'comment_by_you'];
-
 
 
     public function commentByYou(): Attribute
@@ -126,9 +125,9 @@ class Service extends Model
         return $this->hasMany(Benefit::class);
     }
 
-    public function image(): HasMany
+    public function image(): BelongsToMany
     {
-        return $this->hasMany(Image::class);
+        return $this->belongsToMany(Image::class);
     }
 
     public function price(): HasMany

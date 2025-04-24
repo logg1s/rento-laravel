@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\UserStatusEnum;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -19,6 +20,9 @@ return new class extends Migration {
             $table->string('password');
             $table->text('address')->nullable();
             $table->boolean('is_oauth')->default(false);
+            $table->string("expo_token")->nullable();
+            $table->tinyInteger("status")->default(UserStatusEnum::PENDING);
+            $table->foreignId('location_id')->nullable()->constrained();
             $table->softDeletes();
             $table->timestamps();
         });

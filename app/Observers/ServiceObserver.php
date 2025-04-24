@@ -12,10 +12,9 @@ class ServiceObserver
      */
     public function deleted(Service $service): void
     {
-        // Xóa cache của service này
         Cache::forget('service:' . $service->id);
 
-        // Xóa các cache liên quan đến danh sách service
+
         Cache::tags(['services'])->flush();
     }
 
@@ -24,10 +23,9 @@ class ServiceObserver
      */
     public function forceDeleted(Service $service): void
     {
-        // Xóa cache của service này
         Cache::forget('service:' . $service->id);
 
-        // Xóa các cache liên quan đến danh sách service
+
         Cache::tags(['services'])->flush();
     }
 }

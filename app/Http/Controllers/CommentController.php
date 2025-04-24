@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Comment;
 use App\Models\Service;
+use App\Utils\DirtyLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Response;
 class CommentController extends Controller
 {
 
@@ -15,19 +17,33 @@ class CommentController extends Controller
     public function __construct()
     {
         $this->middleware('auth:api');
+        $this->middleware('check.status');
     }
 
-    public function getAll()
+    public function getAll(): JsonResponse
     {
-        return response()->json(Comment::with(self::RELATION_TABLES)->orderBy('id', 'desc')->get());
+        return Response::json(Comment::with(self::RELATION_TABLES)->orderBy('created_at', 'desc')->cursorPaginate(10));
     }
 
-    public function getById(string $id)
+    public function getById(string $id): JsonResponse
     {
-        return response()->json(Comment::findOrFail($id)->load(self::RELATION_TABLES));
+        return Response::json(Comment::findOrFail($id)->load(self::RELATION_TABLES));
     }
 
-    public function create(Request $request, string $serviceId)
+    /**
+     * Get all comments for a specific service
+     */
+    public function getCommentsByServiceId(Request $request, string $id): JsonResponse
+    {
+        $comments = Comment::where('service_id', $id)
+            ->with('user')
+            ->orderBy('id')
+            ->cursorPaginate(10);
+
+        return Response::json($comments);
+    }
+
+    public function create(Request $request, string $serviceId): JsonResponse
     {
         $user = auth()->user();
 
@@ -37,20 +53,20 @@ class CommentController extends Controller
         ]);
 
         if (Comment::where([['service_id', $serviceId], ['user_id', $user->id]])->exists()) {
-            return response()->json(['message' => 'User already commented on this service.'], 400);
+            return Response::json(['message' => 'User already commented on this service.'], 400);
         }
 
-        return DB::transaction(fn() => response()->json(
+        return DB::transaction(fn() => Response::json(
             Comment::create($validated + ['user_id' => $user->id, 'service_id' => $serviceId])
         ));
     }
 
 
-    public function update(Request $request, string $id)
+    public function update(Request $request, string $id): JsonResponse
     {
         $user = auth()->user();
 
-        // Validate input
+
         $validated = $request->validate([
             'rate' => ['integer', 'between:1,5'],
             'comment_body' => ['required', 'string', 'min:1'],
@@ -62,25 +78,25 @@ class CommentController extends Controller
         ])->first();
 
         if (!$comment) {
-            return response()->json(['message' => 'You are not allowed to edit this comment.'], 403);
+            return Response::json(['message' => 'You are not allowed to edit this comment.'], 403);
         }
 
         DB::transaction(fn() => $comment->update($validated));
 
-        return response()->json($comment);
+        return Response::json($comment);
     }
 
 
-    public function delete(string $id)
+    public function delete(string $id): JsonResponse
     {
         $comment = Comment::findOrFail($id);
         $user = auth()->user();
 
         if ($user->id === $comment->user_id || $user->id === $comment->service->user_id) {
             $comment->delete();
-            return response()->json(['message' => 'Comment successfully deleted!']);
+            return Response::json(['message' => 'Comment successfully deleted!']);
         }
 
-        return response()->json(['message' => 'Forbidden failed!'], 403);
+        return Response::json(['message' => 'Forbidden failed!'], 403);
     }
 }

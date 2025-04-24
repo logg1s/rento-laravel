@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -19,24 +19,30 @@ use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
  * @property int $id
  * @property string $name
  * @property string $email
- * @property string $phone_number
+ * @property string|null $phone_number
  * @property int|null $image_id
  * @property string $password
+ * @property string|null $address
+ * @property int $is_oauth
+ * @property string|null $expo_token
  * @property \Illuminate\Support\Carbon|null $deleted_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Image> $image
- * @property-read int|null $image_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Order> $cancelOrder
+ * @property-read int|null $cancel_order_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ChannelNotification> $channelNotification
+ * @property-read int|null $channel_notification_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Comment> $comment
+ * @property-read int|null $comment_count
+ * @property-read \App\Models\Image|null $image
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Notification> $notification
  * @property-read int|null $notification_count
  * @property-read \Illuminate\Notifications\DatabaseNotificationCollection<int, \Illuminate\Notifications\DatabaseNotification> $notifications
  * @property-read int|null $notifications_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Message> $receivedMessage
- * @property-read int|null $received_message_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Order> $order
+ * @property-read int|null $order_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Role> $role
  * @property-read int|null $role_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Message> $sentMessage
- * @property-read int|null $sent_message_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Service> $service
  * @property-read int|null $service_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Service> $serviceFavorite
@@ -48,34 +54,66 @@ use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User onlyTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereAddress($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereDeletedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmail($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereExpoToken($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereImageId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereIsOauth($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePassword($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePhoneNumber($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User withTrashed()
+ * @method static \Illuminate\Databa
+ * Builder<static>|User withoutTrashed()
+ * @property int $status
+ * @property int|null $location_id
+ * @property-read \App\Models\Location|null $location
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereLocationId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereStatus($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User withoutTrashed()
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Comment> $comment
- * @property-read int|null $comment_count
  * @mixin \Eloquent
  */
 class User extends Authenticatable implements JWTSubject
 {
     use Notifiable, SoftDeletes;
 
-    protected $fillable = ['name', 'phone_number', 'password', 'email', 'address', 'image_id', 'is_oauth'];
+    protected $fillable = [
+        'name',
+        'phone_number',
+        'password',
+        'email',
+        'address',
+        'image_id',
+        'is_oauth',
+        'expo_token',
+        'status',
+        'location_id'
+    ];
 
     protected $with = [
         'image',
         'role',
+        'userSetting',
+        'location'
     ];
+    protected $hidden = ['pivot', 'password'];
     public function order(): HasMany
     {
         return $this->hasMany(Order::class);
+    }
+
+    public function notification(): HasMany
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    public function channelNotification(): BelongsToMany
+    {
+        return $this->belongsToMany(ChannelNotification::class);
     }
 
     public function image(): BelongsTo
@@ -90,22 +128,7 @@ class User extends Authenticatable implements JWTSubject
 
     public function serviceFavorite(): BelongsToMany
     {
-        return $this->BelongsToMany(Service::class, 'favorite');
-    }
-
-    public function sentMessage(): HasMany
-    {
-        return $this->hasMany(Message::class, 'sender_id');
-    }
-
-    public function receivedMessage(): HasMany
-    {
-        return $this->hasMany(Message::class, 'receiver_id');
-    }
-
-    public function notification(): HasMany
-    {
-        return $this->hasMany(Notification::class);
+        return $this->belongsToMany(Service::class, 'favorite');
     }
 
     public function role(): BelongsToMany
@@ -133,9 +156,12 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(Order::class, 'cancel_by');
     }
 
-    protected $hidden = [
-        'password',
-    ];
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(Location::class);
+    }
+
+
 
     public function getJWTIdentifier()
     {

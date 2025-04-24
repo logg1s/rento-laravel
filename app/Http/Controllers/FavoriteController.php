@@ -2,74 +2,55 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\ProcessFavoriteUpdate;
-use App\Models\Service;
-use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redis;
-
+use App\Models\Service;
 class FavoriteController extends Controller
 {
-    const CACHE_TTL = 30; // seconds
-    const JOB_DELAY = 10; // seconds
 
     const RELATION_TABLES = ['user', 'category', 'location', 'price', 'comment'];
 
     public function __construct()
     {
         $this->middleware('auth:api');
+        $this->middleware('check.status');
     }
 
-    public function getFavorites()
+    public function getFavorites(): JsonResponse
     {
         $user = Auth::user();
-        $redisKey = "user:{$user->id}:favorites";
-
-        $favoriteIds = Redis::smembers($redisKey);
-
-
-        if (!empty($favoriteIds)) {
-            $favorites = Service::with(self::RELATION_TABLES)->whereIn('id', $favoriteIds)->orderBy('id', 'desc')->get();
-
-        } else {
-            $favorites = $user->serviceFavorite()
-                ->with(self::RELATION_TABLES)
-                ->where('favorite.user_id', $user->id)
-                ->orderBy('id', 'desc')->get();
-
-            if ($favorites->isNotEmpty()) {
-                Redis::pipeline(function ($pipe) use ($redisKey, $favorites) {
-                    foreach ($favorites as $favorite) {
-                        $pipe->sadd($redisKey, $favorite->id);
-                    }
-                    $pipe->expire($redisKey, self::CACHE_TTL);
-                });
-            }
-        }
-
-        return response()->json($favorites);
+        $favorites = $user->serviceFavorite()
+            ->with(self::RELATION_TABLES)
+            ->where('favorite.user_id', $user->id)
+            ->orderBy('created_at', 'desc')->cursorPaginate(perPage: 5);
+        return Response::json($favorites);
     }
 
-    public function toggleFavorite($serviceId)
+    public function getListFavorite(): JsonResponse
     {
         $user = Auth::user();
-        $redisKey = "user:{$user->id}:favorites";
+        $favorites = $user->serviceFavorite()
+            ->orderBy('created_at', 'desc')->get();
+        return Response::json(['service_ids' => $favorites->pluck('id')]);
+    }
+    public function toggleFavorite(Request $request, string $serviceId): JsonResponse
+    {
+        $validate = $request->validate(['action' => 'required|boolean']);
+        $isLiked = $validate['action'];
 
-        $isLiked = Redis::sismember($redisKey, $serviceId);
-
-        ProcessFavoriteUpdate::dispatch([
-            'user_id' => $user->id,
-            'service_id' => $serviceId,
-            'action' => $isLiked ? 'detach' : 'attach'
-        ])->delay(Carbon::now()->addSeconds(self::JOB_DELAY));
-
-        // Update Redis ngay lập tức
+        $user = auth()->guard()->user();
+        $service = Service::findOrFail($serviceId);
+        error_log($isLiked);
         if ($isLiked) {
-            Redis::srem($redisKey, $serviceId);
-            return response()->json(['message' => 'Đã bỏ thích dịch vụ'], 200);
+            $user->serviceFavorite()->attach($service);
         } else {
-            Redis::sadd($redisKey, $serviceId);
-            return response()->json(['message' => 'Đã thích dịch vụ'], 201);
+            $user->serviceFavorite()->detach($service);
         }
+
+        return Response::json(['message' => "Success " . $isLiked ? 'liked' : 'disliked']);
     }
 }

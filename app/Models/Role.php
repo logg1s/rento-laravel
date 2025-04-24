@@ -28,7 +28,7 @@ use Illuminate\Database\Eloquent\Model;
 class Role extends Model
 {
     public $incrementing = false;
-
+    protected $hidden = ['pivot'];
     public function user(): BelongsToMany
     {
         return $this->belongsToMany(User::class);

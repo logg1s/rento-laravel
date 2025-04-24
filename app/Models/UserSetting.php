@@ -28,6 +28,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class UserSetting extends Model
 {
+    protected $fillable = ['is_notification'];
+    protected $hidden = ['pivot'];
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

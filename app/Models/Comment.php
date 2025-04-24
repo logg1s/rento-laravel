@@ -39,6 +39,7 @@ class Comment extends Model
 {
 
     protected $fillable = ['rate', 'comment_body', 'user_id', 'service_id'];
+    protected $hidden = ['pivot'];
     public function image(): BelongsToMany
     {
         return $this->belongsToMany(Image::class);
